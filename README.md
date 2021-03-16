@@ -1,2 +1,8 @@
 # Chromatography Grapher
-DESCRIPTION HERE
+
+Directions:
+asldkfjasldf
+
+
+Example:
+!()[test-data/screenshot.png]

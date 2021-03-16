@@ -396,6 +396,9 @@ def make_graph():
 
 
 
+	#remove later just for quick testing
+	peaks_x = []
+	peaks_x2 = []
 
 
 	
