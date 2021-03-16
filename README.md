@@ -1,4 +1,4 @@
-# Chromatography Grapher
+# LFA Grapher
 
 Directions:
 asldkfjasldf
