@@ -5,4 +5,4 @@ asldkfjasldf
 
 
 Example:
-!()[test-data/screenshot.png]
+![example image](test-data/screenshot.png)
