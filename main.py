@@ -18,11 +18,8 @@ import random
 
 #make GUI
 root = tkinter.Tk()
-
 root.title("Intensity Grapher")
-
 smooth_val = 0
-
 
 text_entry_arr = []
 text_box_arr = []
@@ -278,124 +275,6 @@ def make_graph():
 
 
 
-
-
-
-
-	'''
-	HERE LIES THE DEAD PEAK DETECTION CODE R.I.P (2020-2021)
-	FROM NOW ON WE'RE DOING MANUAL PEAK DETECTION USING MATPLOTLIB.GINPUT()
-
-
-
-	# make peak detection iterative, if you only found one peak in the control keep increasing and increasing until you only get two
-	# in the other one if you get three increase until two or something
-
-	# height, distance, width for the next two lines (height moves at 1.5 the rate of the others)
-	h = d = w = 0
-	#maybe change increase rates later
-
-
-	deriv1 = []
-	deriv2 = []
-
-	for i in range(len(x) - 1):
-		deriv1.append((x[i+1] - x[i]))
-	for i in range(len(x2) - 1):
-		deriv1.append((x2[i+1] - x2[i]))
-
-	x_temp = np.linspace(0, len(deriv1), len(deriv1))
-	x2_temp = np.linspace(0, len(deriv2), len(deriv2))
-
-
-	plt.clf()
-	plt.plot(x_temp, deriv1)
-	plt.plot(x2_temp, deriv2)
-	plt.show()
-
-	# # me trying to make a do-while loop in python
-	while True:
-		peaks_x, _ = find_peaks(np.array(x), height=15, distance=10, width=10)
-		peaks_x2, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)
-
-		if len(peaks_x2) <= 2 and len(peaks_x) == 0:
-		
-		else:
-			if len(peaks_x) > 2 or len(peaks_x2) > 2:
-				#decrease h/d/w (decreasing by half to find local minima)
-				h -= 0.75
-				d -= 0.5
-				w -= 0.5
-			elif len(peaks_x) < 2:
-				#increase h/d/w
-				h += 1.5
-				d += 1
-				w += 1
-			elif h > 100 or d > 100 or w > 100:
-
-
-	if len(peaks_x2) > 2:
-		peaks_x2 = peaks_x2[:2]
-	if len(peaks_x) > 2:
-		peaks_x = peaks_x[:2]
-
-	if len(peaks_x2) == 2:
-		if x2[peaks_x2[1]] > x2[peaks_x2[0]]:
-			if peaks_x2[1] > peaks_x[1]:
-				y = [i + (peaks_x2[1] - peaks_x[1]) for i in y]
-				peaks_x[1] += (peaks_x2[1] - peaks_x[1])
-				peaks_x[0] += (peaks_x2[1] - peaks_x[1])
-				print('A')
-			else:
-				y2 = [i + (peaks_x[1] - peaks_x2[1]) for i in y2]
-				peaks_x2[1] += (peaks_x[1] - peaks_x2[1])
-				peaks_x2[0] += (peaks_x[1] - peaks_x2[1])
-				print('D')
-		else:
-			if peaks_x2[0] > peaks_x[0]:
-				y = [i + (peaks_x2[0] - peaks_x[0]) for i in y]
-				peaks_x[1] += (peaks_x2[0] - peaks_x[0])
-				peaks_x[0] += (peaks_x2[0] - peaks_x[0])
-				print('E')
-			else:
-				y2 = [i + (peaks_x[0] - peaks_x2[0]) for i in y2]
-				peaks_x2[1] += (peaks_x[0] - peaks_x2[0])
-				peaks_x2[0] += (peaks_x[0] - peaks_x2[0])
-				print('F')
-	elif len(peaks_x2) == 1:
-		if peaks_x2[0] > x2[int(len(x2)/2)]:
-			if peaks_x2[0] > peaks_x[1]:
-				y = [i + (peaks_x2[0] - peaks_x[1]) for i in y]
-				peaks_x[1] += (peaks_x2[0] - peaks_x[1])
-				peaks_x[0] += (peaks_x2[0] - peaks_x[1])
-				print('Q')
-			else:
-				y2 = [i + (peaks_x[1] - peaks_x2[0]) for i in y2]
-				peaks_x2[0] += (peaks_x[1] - peaks_x2[0])
-				print('W')
-		else:
-			if peaks_x2[0] > peaks_x[0]:
-				y = [i + (peaks_x2[0] - peaks_x[0]) for i in y]
-				peaks_x[1] += (peaks_x2[0] - peaks_x[0]) 
-				peaks_x[0] += (peaks_x2[0] - peaks_x[0]) 
-				print('AA')
-			else:
-				y2 = [i + (peaks_x[0] - peaks_x2[0]) for i in y2]
-				peaks_x[0] += (peaks_x[0] - peaks_x2[0])
-				print('A')
-	
-	if y[0] > y2[0]:
-		y = y[y2[0]:]
-		x = x[y2[0]:]
-	else:
-		y2 = y2[y[0]:]
-		x2 = x2[y[0]:]
-
-
-	'''
-
-
-
 	#remove later just for quick testing
 	peaks_x = []
 	peaks_x2 = []
@@ -524,13 +403,12 @@ ymax_box.grid(column=3,row=1)
 ymax_entry.trace("w", lambda *args: character_limit(ymax_entry))
 
 e = Button(left_frame, text="Preview", command=make_graph)
-e.pack(side="left",padx = (20, 5), pady=(40,10))
+e.pack(side="left", padx = (20, 5), pady=(40, 10))
 e["state"] = "disable"
 
 b = Button(left_frame, text="Save to .png", command=save_graph)
-b.pack(side = "right",pady=(40,10))
+b.pack(side="right", pady = (40, 10))
 b["state"] = "disable"
-
 
 def character_limit(e):
 	if len(e.get()) > 8 or is_number(e.get()) == False:
