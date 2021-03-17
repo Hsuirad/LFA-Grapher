@@ -407,11 +407,11 @@ e.pack(side="left", padx = (20, 5), pady=(40, 10))
 e["state"] = "disable"
 
 b = Button(left_frame, text="Save to .png", command=save_graph)
-b.pack(side="left", padx = (15, 5), pady = (40, 10))
+b.pack(side="left", padx = (5, 5), pady = (40, 10))
 b["state"] = "disable"
 
 n = Button(left_frame, text="Exit", command=exit)
-n.pack(side="right", pady = (40, 10))
+n.pack(side="right", padx = (5, 5), pady = (40, 10))
 n["state"] = "normal"
 
 def character_limit(e):
