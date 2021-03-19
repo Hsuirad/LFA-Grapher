@@ -8,7 +8,7 @@ asldkfjasldf
 
 ## Test Image
 
-![test image](test-data/A1,B1.jpeg)
+![test image](test-data/A1,B1.jpg)
 
 ## Graph + Software
 
