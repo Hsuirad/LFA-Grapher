@@ -21,8 +21,13 @@ root = tkinter.Tk()
 root.title("Intensity Grapher")
 smooth_val = 0
 
+# ratio is 3:2
+plot_disp_size = (int(370*1.5), 370)
+
 text_entry_arr = []
 text_box_arr = []
+
+bounds = []
 
 
 def update_thresh(val):
@@ -96,7 +101,7 @@ def thresh_and_crop():
 	cv2.imwrite('./cropped/' + os.path.split(img_path)[1], crop)
 
 	global im1
-	imtemp = Image.open('./cropped/' + os.path.split(img_path)[1]).resize((450, 300))
+	imtemp = Image.open('./cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	
 	im1 = ImageTk.PhotoImage(imtemp)
 	c.itemconfigure(theimg, image = im1)
@@ -150,8 +155,8 @@ def button_press():
 	root.filename = filedialog.askopenfilename(initialdir = "./",title = "Select image file",filetypes = (("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
 def update_choice():
-	b["state"] = "normal"
-	e["state"] = "normal"
+	q["state"] = "normal"
+
 	global grabbed
 	grabbed = choice.get()
 
@@ -165,6 +170,13 @@ def smooth(interval, window_size):
 	window = np.ones(int(window_size))/float(window_size)
 	print("window {}".format(window))
 	return np.convolve(interval, window, 'valid')
+
+def choose_peak_bounds():
+	b["state"] = "normal"
+	e["state"] = "normal"
+	global bounds
+
+	return bounds
 
 
 def make_graph():
@@ -216,25 +228,25 @@ def make_graph():
 	print(len(x), len(y))
 
 
-	xmin_val = xmax_val = ymin_val = ymax_val = 0
+	# xmin_val = xmax_val = ymin_val = ymax_val = 0
 
-	if not is_number(xmin_entry.get()) or xmin_entry.get=="":
-		xmin_val = -100000
-	else:
-		xmin_val = float(xmin_entry.get())
-	if not is_number(xmax_entry.get()) or xmax_entry.get=="":
-		xmax_val = 100000
-	else:
-		xmax_val = float(xmax_entry.get())
+	# if not is_number(xmin_entry.get()) or xmin_entry.get=="":
+	# 	xmin_val = -100000
+	# else:
+	# 	xmin_val = float(xmin_entry.get())
+	# if not is_number(xmax_entry.get()) or xmax_entry.get=="":
+	# 	xmax_val = 100000
+	# else:
+	# 	xmax_val = float(xmax_entry.get())
 
-	if not is_number(ymin_entry.get()) or ymin_entry.get=="":
-		ymin_val = -100000
-	else:
-		ymin_val = float(ymin_entry.get())
-	if not is_number(ymax_entry.get()) or ymax_entry.get=="":
-		ymax_val = 100000
-	else:
-		ymax_val = float(ymax_entry.get())
+	# if not is_number(ymin_entry.get()) or ymin_entry.get=="":
+	# 	ymin_val = -100000
+	# else:
+	# 	ymin_val = float(ymin_entry.get())
+	# if not is_number(ymax_entry.get()) or ymax_entry.get=="":
+	# 	ymax_val = 100000
+	# else:
+	# 	ymax_val = float(ymax_entry.get())
 
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 
@@ -273,18 +285,55 @@ def make_graph():
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
 
+	plt.plot(x)
+	plt.title("CHOOSE THE LEFTMOST PEAK BOUNDS")
+
+	clicked = plt.ginput(2)
+	print(clicked)
+	left_peak = [float(str(clicked).split(', ')[0][2:]), float(str(clicked).split(', ')[2][1:])]
+	print(left_peak)
+	plt.clf()
+
+	plt.title("CHOOSE THE RIGHTMOST PEAK BOUNDS")
+	plt.plot(x)
+
+	clicked = plt.ginput(2)
+	print(clicked)
+	right_peak = [float(str(clicked).split(', ')[0]), float(str(clicked).split(', ')[1])]
 
 
-	#remove later just for quick testing
-	peaks_x = []
-	peaks_x2 = []
 
+	'''
+	t = np.arange(0, 10, 0.01) 
+	y = np.sin(t)+1
+	plt.plot(t, y) 
+	plt.title('matplotlib.pyplot.ginput() function Example', fontweight ="bold") 
 
+	print("After 2 clicks :") 
+	x = plt.ginput(2) 
+	print(x) 
 	
+	plt.clf()
 
-	print(len(x), len(y))
-	plt.plot(y, x, linewidth=3)
-	plt.plot(y2, x2, linewidth=3)
+	endpoint1 = round(float(str(x[0]).split(', ')[0][1:]),2)
+	endpoint2 = round(float(str(x[1]).split(', ')[0][1:]),2)
+
+	print(endpoint1, endpoint2, t)
+
+	t2 = np.arange(endpoint1, endpoint2, 0.01)
+
+	print(t2)
+
+	plt.close()
+
+	y2 = np.sin(t2)+1
+	plt.plot(t2, y2) 
+
+	area = simps(y2, dx = 0.01)
+	print(area)
+
+	plt.show() 
+	'''
 
 	print(len(x), len(y))
 	ax.tick_params(width=1)
@@ -323,7 +372,7 @@ def make_graph():
 	plt.savefig("temp.png",bbox_inches='tight')
 
 	global im1
-	im1 = ImageTk.PhotoImage(Image.open('temp.png').resize((450, 300)))
+	im1 = ImageTk.PhotoImage(Image.open('temp.png').resize(plot_disp_size))
 	c.itemconfigure(theimg, image = im1)
 
 	os.remove('./temp.png')
@@ -345,8 +394,14 @@ middle_frame.pack(side="right")
 right_frame = Frame(root)
 right_frame.pack(side="right")
 
-Button(left_frame, text="Select a file", command=button_press).pack(pady=(20, 10))
+n = Button(left_frame, text="Exit", command=exit)
+n.pack(anchor = 'nw', padx = (5, 5), pady = (5, 10))
+n["state"] = "normal"
+
+Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
 #Button(left_frame, text="test", command=thresh_and_crop).pack()
+
+
 
 Label(left_frame, text="Threshold Slider", justify = "center").pack(pady=(0,5))
 s = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
@@ -370,55 +425,62 @@ for mode, val in modes:
 	Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=choice, value=val).pack(anchor ='w')
 	i+=1
 
-
-c = Canvas(middle_frame, width=450, height = 300) #height = width too
+w, h = plot_disp_size
+c = Canvas(middle_frame, width=w, height = h) #height = width too
 c.pack(padx=(20, 0), pady=(0,5))
 
 
 sub_middle_frame = Frame(middle_frame)
 sub_middle_frame.pack(side="bottom", pady=(0, 10))
 
-Label(sub_middle_frame, text="X-Minimum Value: ").grid(column=0,row=0)
-xmin_entry = StringVar()
-xmin_box = Entry(sub_middle_frame, textvariable=xmin_entry, width=8)
-xmin_box.grid(column=1,row=0)
-xmin_entry.trace("w", lambda *args: character_limit(xmin_entry))
+Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0,row=0,pady=(10,0))
+h_shift = StringVar()
+h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+h_shift_box.grid(column=1,row=0,pady=(10,0))
+h_shift.trace("w", lambda *args: character_limit(h_shift))
 
-Label(sub_middle_frame, text="X-Maximum Value: ").grid(column=0,row=1)
-xmax_entry = StringVar()
-xmax_box = Entry(sub_middle_frame, textvariable=xmax_entry, width=8)
-xmax_box.grid(column=1,row=1, padx=10)
-xmax_entry.trace("w", lambda *args: character_limit(xmax_entry))
+Label(sub_middle_frame, text="Vertical shift lines value (ex: -10.5): ").grid(column=0,row=1,pady=(10,0))
+v_shift = StringVar()
+v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
+v_shift_box.grid(column=1,row=1,pady=(10,0))
+v_shift.trace("w", lambda *args: character_limit(v_shift))
 
-Label(sub_middle_frame, text="Y-Minimum Value: ").grid(column=2,row=0)
-ymin_entry = StringVar()
-ymin_box = Entry(sub_middle_frame, textvariable=ymin_entry, width=8)
-ymin_box.grid(column=3,row=0)
-ymin_entry.trace("w", lambda *args: character_limit(ymin_entry))
+# Label(sub_middle_frame, text="X-Maximum Value: ").grid(column=0,row=1)
+# xmax_entry = StringVar()
+# xmax_box = Entry(sub_middle_frame, textvariable=xmax_entry, width=8)
+# xmax_box.grid(column=1,row=1, padx=10)
+# xmax_entry.trace("w", lambda *args: character_limit(xmax_entry))
 
-Label(sub_middle_frame, text="Y-Maximum Value: ").grid(column=2,row=1)
-ymax_entry = StringVar()
-ymax_box = Entry(sub_middle_frame, textvariable=ymax_entry, width=8)
-ymax_box.grid(column=3,row=1)
-ymax_entry.trace("w", lambda *args: character_limit(ymax_entry))
+# Label(sub_middle_frame, text="Y-Minimum Value: ").grid(column=2,row=0)
+# ymin_entry = StringVar()
+# ymin_box = Entry(sub_middle_frame, textvariable=ymin_entry, width=8)
+# ymin_box.grid(column=3,row=0)
+# ymin_entry.trace("w", lambda *args: character_limit(ymin_entry))
+
+# Label(sub_middle_frame, text="Y-Maximum Value: ").grid(column=2,row=1)
+# ymax_entry = StringVar()
+# ymax_box = Entry(sub_middle_frame, textvariable=ymax_entry, width=8)
+# ymax_box.grid(column=3,row=1)
+# ymax_entry.trace("w", lambda *args: character_limit(ymax_entry))
+
+q = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
+q.pack(side="left", padx = (10, 5), pady = (40, 10))
+q["state"] = "disable"
 
 e = Button(left_frame, text="Preview", command=make_graph)
-e.pack(side="left", padx = (20, 5), pady=(40, 10))
+e.pack(side="left", padx = (5, 5), pady=(40, 10))
 e["state"] = "disable"
 
 b = Button(left_frame, text="Save to .png", command=save_graph)
 b.pack(side="left", padx = (5, 5), pady = (40, 10))
 b["state"] = "disable"
 
-n = Button(left_frame, text="Exit", command=exit)
-n.pack(side="right", padx = (5, 5), pady = (40, 10))
-n["state"] = "normal"
 
 def character_limit(e):
 	if len(e.get()) > 8 or is_number(e.get()) == False:
 		e.set(e.get()[:-1])
 
-im1 = ImageTk.PhotoImage(Image.new("RGB", (450, 300), (255, 255, 255)))  # PIL solution
+im1 = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
 theimg = c.create_image(0, 0, image=im1, anchor = 'nw')
 
 
