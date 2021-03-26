@@ -29,12 +29,6 @@ text_box_arr = []
 
 bounds = []
 
-def help_window():
-	window = tkinter.Toplevel(root)
-	window.title("New Window") 
-	window.geometry("200x200") 
-	text = "This is \na test"
-	label = Label(window, text=text).pack(anchor='nw') 
 
 def update_thresh(val):
 	global thresh_val
@@ -104,10 +98,10 @@ def thresh_and_crop():
 	#cropping
 	crop = test[y_min_val:y_max_val, x_min_val:x_max_val]
 
-	cv2.imwrite('./resources/cropped/' + os.path.split(img_path)[1], crop)
+	cv2.imwrite('./cropped/' + os.path.split(img_path)[1], crop)
 
 	global im1
-	imtemp = Image.open('./resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
+	imtemp = Image.open('./cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	
 	im1 = ImageTk.PhotoImage(imtemp)
 	c.itemconfigure(theimg, image = im1)
@@ -115,7 +109,7 @@ def thresh_and_crop():
 def find_roi():
 
 	try:
-		img_path = './resources/cropped/' + os.path.split(root.filename)[1]
+		img_path = './cropped/' + os.path.split(root.filename)[1]
 	except:
 		return
 	
@@ -133,8 +127,8 @@ def find_roi():
 
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-	cv2.imwrite("resources/topline.jpeg",roi_cropped)
-	cv2.imwrite('resources/bottomline.jpeg', roi_cropped2)
+	cv2.imwrite("topline.jpeg",roi_cropped)
+	cv2.imwrite('bottomline.jpeg', roi_cropped2)
 
 	cv2.destroyAllWindows()
 
@@ -195,8 +189,8 @@ def make_graph():
 	except:
 		print('You should be impressed you managed to get this error')
 		
-	control_line = Image.open('resources/topline.jpeg').convert("L")
-	test_line = Image.open('resources/bottomline.jpeg').convert("L")
+	control_line = Image.open('topline.jpeg').convert("L")
+	test_line = Image.open('bottomline.jpeg').convert("L")
 
 
 
@@ -291,8 +285,16 @@ def make_graph():
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
 
+	plt.plot(x)
+	plt.title("CHOOSE THE LEFTMOST PEAK BOUNDS")
+
+	clicked = plt.ginput(2)
+	print(clicked)
+	left_peak = [float(str(clicked).split(', ')[0][2:]), float(str(clicked).split(', ')[2][1:])]
+	print(left_peak)
 	plt.clf()
-	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Area Bounds Selection)")
+
+	plt.title("CHOOSE THE RIGHTMOST PEAK BOUNDS")
 	plt.plot(x)
 
 	clicked = plt.ginput(2)
@@ -382,94 +384,104 @@ def save_graph():
 		plt.savefig(f, bbox_inches='tight')
 	elif f is None:
 		return
-	
 
-def init():
-	# setting variables to global scope that need to be accessed outside of init()
-	global c, q, n, e, b, im1, choice, theimg
+left_frame = Frame(root)
+left_frame.pack(side="left")
 
-	left_frame = Frame(root)
-	left_frame.pack(side="left")
+middle_frame = Frame(root)
+middle_frame.pack(side="right")
 
-	middle_frame = Frame(root)
-	middle_frame.pack(side="right")
+right_frame = Frame(root)
+right_frame.pack(side="right")
 
-	right_frame = Frame(root)
-	right_frame.pack(side="right")
+n = Button(left_frame, text="Exit", command=exit)
+n.pack(anchor = 'nw', padx = (5, 5), pady = (5, 10))
+n["state"] = "normal"
 
-	n = Button(left_frame, text="Exit", command=exit)
-	n.pack(anchor = 'nw', padx = (5, 5), pady=(5,0), side='left')
-	n["state"] = "normal"
-
-	Button(left_frame, text="Help", command = help_window).pack(anchor='ne', padx=(0, 0),pady=(0, 10), side='right')
-
-	Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
-
-	Label(left_frame, text="Threshold Slider", justify = "center").pack(pady=(0,5))
-	s = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
-	s.pack(padx=20, pady=(0, 10))
-
-	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0, 15))
-
-	Label(left_frame, text="Curve Smoothing", justify = "center", padx = 20).pack()
-	s2 = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_thresh2)
-	s2.pack(padx=20, pady=(0, 20))
-
-	choice = tkinter.IntVar()
-	choice.set(1)
-
-	modes = [("Midpoint", 101), ("Lowest Value", 102)]
-
-	Label(left_frame, text="Baseline from:", justify = "left", padx = 20).pack()
-	i=0
-
-	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=choice, value=val).pack(anchor ='w')
-		i+=1
-
-	w, h = plot_disp_size
-	c = Canvas(middle_frame, width=w, height = h) #height = width too
-	c.pack(padx=(20, 0), pady=(0,5))
+Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
+#Button(left_frame, text="test", command=thresh_and_crop).pack()
 
 
-	sub_middle_frame = Frame(middle_frame)
-	sub_middle_frame.pack(side="bottom", pady=(0, 10))
 
-	Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0,row=0,pady=(10,0))
-	h_shift = StringVar()
-	h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-	h_shift_box.grid(column=1,row=0,pady=(10,0))
-	h_shift.trace("w", lambda *args: character_limit(h_shift))
+Label(left_frame, text="Threshold Slider", justify = "center").pack(pady=(0,5))
+s = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
+s.pack(padx=20, pady=(0, 10))
 
-	Label(sub_middle_frame, text="Vertical shift lines value (ex: -10.5): ").grid(column=0,row=1,pady=(10,0))
-	v_shift = StringVar()
-	v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
-	v_shift_box.grid(column=1,row=1,pady=(10,0))
-	v_shift.trace("w", lambda *args: character_limit(v_shift))
+Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0, 15))
 
-	q = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
-	q.pack(side="left", padx = (10, 5), pady = (40, 10))
-	q["state"] = "disable"
+Label(left_frame, text="Curve Smoothing", justify = "center", padx = 20).pack()
+s2 = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_thresh2)
+s2.pack(padx=20, pady=(0, 20))
 
-	e = Button(left_frame, text="Preview", command=make_graph)
-	e.pack(side="left", padx = (5, 5), pady=(40, 10))
-	e["state"] = "disable"
+choice = tkinter.IntVar()
+choice.set(1)
 
-	b = Button(left_frame, text="Save to .png", command=save_graph)
-	b.pack(side="left", padx = (5, 5), pady = (40, 10))
-	b["state"] = "disable"
+modes = [("Midpoint", 101), ("Lowest Value", 102)]
 
-	im1 = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
-	theimg = c.create_image(0, 0, image=im1, anchor = 'nw')
+Label(left_frame, text="Baseline from:", justify = "left", padx = 20).pack()
+i=0
+
+for mode, val in modes:
+	Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=choice, value=val).pack(anchor ='w')
+	i+=1
+
+w, h = plot_disp_size
+c = Canvas(middle_frame, width=w, height = h) #height = width too
+c.pack(padx=(20, 0), pady=(0,5))
 
 
-# makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925, ...)
+sub_middle_frame = Frame(middle_frame)
+sub_middle_frame.pack(side="bottom", pady=(0, 10))
+
+Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0,row=0,pady=(10,0))
+h_shift = StringVar()
+h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+h_shift_box.grid(column=1,row=0,pady=(10,0))
+h_shift.trace("w", lambda *args: character_limit(h_shift))
+
+Label(sub_middle_frame, text="Vertical shift lines value (ex: -10.5): ").grid(column=0,row=1,pady=(10,0))
+v_shift = StringVar()
+v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
+v_shift_box.grid(column=1,row=1,pady=(10,0))
+v_shift.trace("w", lambda *args: character_limit(v_shift))
+
+# Label(sub_middle_frame, text="X-Maximum Value: ").grid(column=0,row=1)
+# xmax_entry = StringVar()
+# xmax_box = Entry(sub_middle_frame, textvariable=xmax_entry, width=8)
+# xmax_box.grid(column=1,row=1, padx=10)
+# xmax_entry.trace("w", lambda *args: character_limit(xmax_entry))
+
+# Label(sub_middle_frame, text="Y-Minimum Value: ").grid(column=2,row=0)
+# ymin_entry = StringVar()
+# ymin_box = Entry(sub_middle_frame, textvariable=ymin_entry, width=8)
+# ymin_box.grid(column=3,row=0)
+# ymin_entry.trace("w", lambda *args: character_limit(ymin_entry))
+
+# Label(sub_middle_frame, text="Y-Maximum Value: ").grid(column=2,row=1)
+# ymax_entry = StringVar()
+# ymax_box = Entry(sub_middle_frame, textvariable=ymax_entry, width=8)
+# ymax_box.grid(column=3,row=1)
+# ymax_entry.trace("w", lambda *args: character_limit(ymax_entry))
+
+q = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
+q.pack(side="left", padx = (10, 5), pady = (40, 10))
+q["state"] = "disable"
+
+e = Button(left_frame, text="Preview", command=make_graph)
+e.pack(side="left", padx = (5, 5), pady=(40, 10))
+e["state"] = "disable"
+
+b = Button(left_frame, text="Save to .png", command=save_graph)
+b.pack(side="left", padx = (5, 5), pady = (40, 10))
+b["state"] = "disable"
+
+
 def character_limit(e):
 	if len(e.get()) > 8 or is_number(e.get()) == False:
 		e.set(e.get()[:-1])
 
+im1 = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
+theimg = c.create_image(0, 0, image=im1, anchor = 'nw')
 
-# __name__ is a preset python variable where if you're running this as the main file and not as some imported library, then __name__ is set to __main__
-if __name__ == '__main__':
-	init() #builds all the buttons and frames
-	root.mainloop()
+
+root.mainloop()

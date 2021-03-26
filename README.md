@@ -4,6 +4,12 @@ Directions:
 asldkfjasldf
 
 
-Example:
+# Example:
+
+## Test Image
+
+![test image](test-data/A1,B1.jpg)
+
+## Graph + Software
 
 ![example image](test-data/screenshot.png)
