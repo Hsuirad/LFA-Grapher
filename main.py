@@ -29,6 +29,12 @@ text_box_arr = []
 
 bounds = []
 
+def help_window():
+	window = tkinter.Toplevel(root)
+	window.title("New Window") 
+	window.geometry("200x200") 
+	text = "This is \na test"
+	label = Label(window, text=text).pack(anchor='nw') 
 
 def update_thresh(val):
 	global thresh_val
@@ -285,16 +291,8 @@ def make_graph():
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
 
-	plt.plot(x)
-	plt.title("CHOOSE THE LEFTMOST PEAK BOUNDS")
-
-	clicked = plt.ginput(2)
-	print(clicked)
-	left_peak = [float(str(clicked).split(', ')[0][2:]), float(str(clicked).split(', ')[2][1:])]
-	print(left_peak)
 	plt.clf()
-
-	plt.title("CHOOSE THE RIGHTMOST PEAK BOUNDS")
+	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Area Bounds Selection)")
 	plt.plot(x)
 
 	clicked = plt.ginput(2)
@@ -399,8 +397,10 @@ def init():
 	right_frame.pack(side="right")
 
 	n = Button(left_frame, text="Exit", command=exit)
-	n.pack(anchor = 'nw', padx = (5, 5), pady = (5, 10))
+	n.pack(anchor = 'nw', padx = (5, 5), pady=(5,0), side='left')
 	n["state"] = "normal"
+
+	Button(left_frame, text="Help", command = help_window).pack(anchor='ne', padx=(0, 0),pady=(0, 10), side='right')
 
 	Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
 
