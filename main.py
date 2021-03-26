@@ -29,6 +29,12 @@ text_box_arr = []
 
 bounds = []
 
+if 'resources' not in os.listdir('./'):
+	os.mkdir('resources')
+
+if 'resources/cropped' not in os.listdir('./resources'):
+	os.mkdir('resources/cropped')
+
 def help_window():
 	window = tkinter.Toplevel(root)
 	window.title("New Window") 
@@ -56,12 +62,16 @@ def thresh_and_crop():
 
 	if leave:
 		return
+<<<<<<< HEAD
 
 	if 'resources' not in os.listdir('./'):
 		os.mkdir('resources')
 	
 	if 'cropped' not in os.listdir('./resources'):
 		os.mkdir('resources/cropped')
+=======
+	
+>>>>>>> 11b54883bb7b21ed5655979bde710ed6375459a0
 
 	img = cv2.imread(img_path)
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
