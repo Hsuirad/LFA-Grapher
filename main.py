@@ -335,6 +335,7 @@ def save_graph():
 		plt.savefig(f, bbox_inches='tight')
 	elif f is None:
 		return
+	
 
 left_frame = Frame(root)
 left_frame.pack(side="left")

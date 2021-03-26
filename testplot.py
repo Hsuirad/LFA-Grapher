@@ -5,7 +5,7 @@ import math
 from scipy.integrate import simps
 
 t = np.arange(0, 10, 0.01) 
-y = t
+y = np.cos(t)+1
 plt.plot(t, y) 
 plt.title('matplotlib.pyplot.ginput() function Example', fontweight ="bold") 
 
@@ -26,11 +26,11 @@ t2 = np.arange(endpoint1, endpoint2, 0.01)
 
 plt.close()
 
-y2 = t2
+y2 = np.cos(t2)+1
 plt.plot(t2, y2) 
 
 area = simps(y2, dx = 0.01)
 print(area)
-print((pow(endpoint2, 2)-pow(endpoint1, 2))/2)
+print(np.sin(endpoint2)-np.sin(endpoint1)+endpoint2-endpoint1)
 
 plt.show() 
