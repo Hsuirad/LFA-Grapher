@@ -57,8 +57,11 @@ def thresh_and_crop():
 	if leave:
 		return
 
-	if 'cropped' not in os.listdir('./'):
-		os.mkdir('cropped')
+	if 'resources' not in os.listdir('./'):
+		os.mkdir('resources')
+	
+	if 'cropped' not in os.listdir('./resources'):
+		os.mkdir('resources/cropped')
 
 	img = cv2.imread(img_path)
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
