@@ -290,7 +290,7 @@ def make_graph():
 	for i in range(len(x2)):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
-
+	'''
 	plt.clf()
 	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Area Bounds Selection)")
 	plt.plot(x)
@@ -298,7 +298,7 @@ def make_graph():
 	clicked = plt.ginput(2)
 	print(clicked)
 	right_peak = [float(str(clicked).split(', ')[0]), float(str(clicked).split(', ')[1])]
-
+	'''
 
 
 	'''
@@ -334,6 +334,8 @@ def make_graph():
 	'''
 
 	print(len(x), len(y))
+	plt.plot(x)
+	plt.plot(x2)
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -353,14 +355,14 @@ def make_graph():
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
 
 	plt.legend(["Top Line", "Bottom Line"], frameon=False, prop={'family': "Arial", "weight": 'bold', "size": 32})
-
+	'''
 	for i in peaks_x:
 		plt.annotate('Peak: {}'.format(x[i]), xy = (i, x[i]))
 	for i in peaks_x2:
 		plt.annotate('Peak: {}'.format(x2[i]), xy = (i, x2[i]))
 
 	print(peaks_x, peaks_x2)
-
+	'''
 
 	# plt.show()
 	figure = plt.gcf()
