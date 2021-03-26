@@ -32,7 +32,7 @@ bounds = []
 if 'resources' not in os.listdir('./'):
 	os.mkdir('resources')
 
-if 'resources/cropped' not in os.listdir('./resources'):
+if 'cropped' not in os.listdir('./resources'):
 	os.mkdir('resources/cropped')
 
 def help_window():
