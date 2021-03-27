@@ -29,12 +29,18 @@ text_box_arr = []
 
 bounds = []
 
-if 'resources' not in os.listdir('./'):
-	os.mkdir('resources')
+if 'resources' not in os.listdir('../'):
+	os.mkdir('../resources')
 
-if 'cropped' not in os.listdir('./resources'):
-	os.mkdir('resources/cropped')
+if 'cropped' not in os.listdir('../resources'):
+	os.mkdir('../resources/cropped')
 
+#for when the user hits "X" instead of the "Exit" button
+def on_closing():
+    if tkinter.messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
+        root.destroy()
+
+#presents a help window with documentation on how to use our program, will make it read from the README.md file later
 def help_window():
 	window = tkinter.Toplevel(root)
 	window.title("New Window") 
@@ -107,10 +113,10 @@ def thresh_and_crop():
 	#cropping
 	crop = test[y_min_val:y_max_val, x_min_val:x_max_val]
 
-	cv2.imwrite('./resources/cropped/' + os.path.split(img_path)[1], crop)
+	cv2.imwrite('../resources/cropped/' + os.path.split(img_path)[1], crop)
 
 	global im1
-	imtemp = Image.open('./resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
+	imtemp = Image.open('../resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	
 	im1 = ImageTk.PhotoImage(imtemp)
 	c.itemconfigure(theimg, image = im1)
@@ -118,7 +124,7 @@ def thresh_and_crop():
 def find_roi():
 
 	try:
-		img_path = './resources/cropped/' + os.path.split(root.filename)[1]
+		img_path = '../resources/cropped/' + os.path.split(root.filename)[1]
 	except:
 		return
 	
@@ -136,8 +142,8 @@ def find_roi():
 
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-	cv2.imwrite("resources/topline.jpeg",roi_cropped)
-	cv2.imwrite('resources/bottomline.jpeg', roi_cropped2)
+	cv2.imwrite("../resources/topline.jpeg",roi_cropped)
+	cv2.imwrite('../resources/bottomline.jpeg', roi_cropped2)
 
 	cv2.destroyAllWindows()
 
@@ -161,7 +167,7 @@ def make_num(num):
 		return "1st"
 
 def button_press():
-	root.filename = filedialog.askopenfilename(initialdir = "./",title = "Select image file",filetypes = (("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
+	root.filename = filedialog.askopenfilename(initialdir = "../",title = "Select image file",filetypes = (("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
 def update_choice():
 	q["state"] = "normal"
@@ -198,8 +204,8 @@ def make_graph():
 	except:
 		print('You should be impressed you managed to get this error')
 		
-	control_line = Image.open('resources/topline.jpeg').convert("L")
-	test_line = Image.open('resources/bottomline.jpeg').convert("L")
+	control_line = Image.open('../resources/topline.jpeg').convert("L")
+	test_line = Image.open('../resources/bottomline.jpeg').convert("L")
 
 
 
@@ -372,13 +378,13 @@ def make_graph():
 
 	figure.set_size_inches(15, 10)
 
-	plt.savefig("temp.png",bbox_inches='tight')
+	plt.savefig("../resources/temp.png",bbox_inches='tight')
 
 	global im1
-	im1 = ImageTk.PhotoImage(Image.open('temp.png').resize(plot_disp_size))
+	im1 = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
 	c.itemconfigure(theimg, image = im1)
 
-	os.remove('./temp.png')
+	os.remove('../resources/temp.png')
 
 def save_graph():
 	#plt.savefig(bbox_inches='tight')
@@ -402,11 +408,7 @@ def init():
 	right_frame = Frame(root)
 	right_frame.pack(side="right")
 
-	n = Button(left_frame, text="Exit", command=exit)
-	n.pack(anchor = 'nw', padx = (5, 5), pady=(5,0), side='left')
-	n["state"] = "normal"
-
-	Button(left_frame, text="Help", command = help_window).pack(anchor='ne', padx=(0, 0),pady=(0, 10), side='right')
+	Button(left_frame, text="Help", command = help_window).pack(anchor='nw', padx=(10, 0),pady=(0, 10))
 
 	Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
 
@@ -477,4 +479,6 @@ def character_limit(e):
 # __name__ is a preset python variable where if you're running this as the main file and not as some imported library, then __name__ is set to __main__
 if __name__ == '__main__':
 	init() #builds all the buttons and frames
-	root.mainloop()
+	
+	root.protocol("WM_DELETE_WINDOW", on_closing) #when the "x" is hit to close the window, tkinter needs to handle it in a special way
+	root.mainloop() #starts the instance of tkinter (the GUI framework)

@@ -2,12 +2,12 @@ import setuptools
 
 full_desc = ""
 
-with open("README.md", 'r', encoding='utf-8') as fh:
+with open("DESC.md", 'r', encoding='utf-8') as fh:
     full_desc = fh.read()
 
 setuptools.setup(
     name="chromatography-grapher-HSUIRAD",
-    version="1.0.4",
+    version="2.1.6",
     author="Dariush Aligholizadeh and Alan Mao",
     author_email="daligho1@umbc.edu",
     description="A simple graphing tool for graphing pictures of chromatography from grayscale values",
