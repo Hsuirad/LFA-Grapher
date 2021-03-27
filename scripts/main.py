@@ -29,13 +29,14 @@ text_box_arr = []
 
 bounds = []
 
+#creates resource folder in path
 if 'resources' not in os.listdir('../'):
 	os.mkdir('../resources')
 
 if 'cropped' not in os.listdir('../resources'):
 	os.mkdir('../resources/cropped')
 
-#for when the user hits "X" instead of the "Exit" button
+#for exiting the program
 def on_closing():
 	if tkinter.messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
 		print("Exited")
@@ -46,20 +47,22 @@ def on_closing():
 def help_window():
 	window = tkinter.Toplevel(root)
 	window.title("New Window") 
-	window.geometry("200x200") 
+	window.geometry("200x200")
 	text = "This is \na test"
 	label = Label(window, text=text).pack(anchor='nw') 
 
+#threshold slider
 def update_thresh(val):
 	global thresh_val
 	thresh_val = val
 	thresh_and_crop()
-	print(thresh_val)
+	print("Thresh: " + thresh_val)
 
-def update_thresh2(val):
+#smoothing filter slider
+def update_smooth(val):
 	global smooth_val
 	smooth_val = val
-	print(smooth_val)
+	print("Smooth: " + smooth_val)
 
 def thresh_and_crop():
 	try:
@@ -71,50 +74,49 @@ def thresh_and_crop():
 	if leave:
 		return
 
+	#thresholding
 	img = cv2.imread(img_path)
-	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-	#have them ROI color picker a color for low thresh
+	_, thresh_img = cv2.threshold(gray_img, 255*(float(thresh_val)/100), 255, cv2.THRESH_TOZERO)
 
-	_, test = cv2.threshold(gray, 255*(float(thresh_val)/100), 255, cv2.THRESH_TOZERO)
-	#print(255*(float(thresh_val)/100))
+	#cropping
+	cnt, hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+	cnt_sort = sorted(cnt, key=cv2.contourArea)
 
-	cnts, hierarchy = cv2.findContours(test, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+	'''
+	KEEP might use pointpolytest later
+	print(cnt_sort, cv2.pointPolygonTest(cnt_sort[-1], (0, 0), False))
+	'''
 
-	cnt = sorted(cnts, key=cv2.contourArea)
+	cv2.drawContours(thresh_img, cnt_sort[:-2], -1, 0, -1)
+	cnt_sort = cnt_sort[-2:]
 
-	#keep this line pls might use pointpolytest later
-	#print(cnt, cv2.pointPolygonTest(cnt[-1], (0, 0), False))
-
-	cv2.drawContours(test, cnt[:-2], -1, 0, -1)
-	cnt = cnt[-2:]
-
-	x_min_val = cnt[-1][0][0][0]
-	x_max_val = 0
-	y_max_val = 0
-	y_min_val = cnt[-1][0][0][1]
+	xmin = cnt_sort[-1][0][0][0]
+	xmax = 0	
+	ymin = cnt_sort[-1][0][0][1]
+	ymax = 0
 
 	#finding lowest x val and highest x val
-	for i in range(len(cnt)):
-		for j in range(len(cnt[i])):
-			for z in range(len(cnt[i][j])):
-				f = cnt[i][j]
+	for i in range(len(cnt_sort)):
+		for j in range(len(cnt_sort[i])):
+			for z in range(len(cnt_sort[i][j])):
+				f = cnt_sort[i][j]
 
-				if f[z][0] < x_min_val:
-					x_min_val = f[z][0]
-				if f[z][0] > x_max_val:
-					x_max_val = f[z][0]
-
-				if f[z][1] < y_min_val:
-					y_min_val = f[z][1]
-				if f[z][1] > y_max_val:
-					y_max_val = f[z][1]
-
-	#print((y_max_val, y_min_val, x_min_val, x_max_val))
+				if f[z][0] < xmin:
+					xmin = f[z][0]
+				if f[z][0] > xmax:
+					xmax = f[z][0]
+				if f[z][1] < ymin:
+					ymin = f[z][1]
+				if f[z][1] > ymax:
+					ymax = f[z][1]
 	
-	#cropping
-	crop = test[y_min_val:y_max_val, x_min_val:x_max_val]
+	print((ymax, ymin, xmin, xmax))
+	
+	crop = thresh_img[ymin:ymax, xmin:xmax]
 
+	#saves cropped image in cropped folder
 	cv2.imwrite('../resources/cropped/' + os.path.split(img_path)[1], crop)
 
 	global im1
@@ -124,7 +126,6 @@ def thresh_and_crop():
 	c.itemconfigure(theimg, image = im1)
 
 def find_roi():
-
 	try:
 		img_path = '../resources/cropped/' + os.path.split(root.filename)[1]
 	except:
@@ -197,9 +198,11 @@ def choose_peak_bounds():
 
 
 def make_graph():
-#UNCOMMENT LATER
-
-	#folder_selected = filedialog.askdirectory(title='Choose Location to Save Data')
+	
+	'''
+	UNCOMMENT LATER
+	folder_selected = filedialog.askdirectory(title='Choose Location to Save Data')
+	'''
 
 	try:
 		plt.clf()
@@ -244,26 +247,27 @@ def make_graph():
 
 	print(len(x), len(y))
 
+	'''
+	xmin_val = xmax_val = ymin_val = ymax_val = 0
 
-	# xmin_val = xmax_val = ymin_val = ymax_val = 0
+	if not is_number(xmin_entry.get()) or xmin_entry.get=="":
+	 	xmin_val = -100000
+	else:
+		xmin_val = float(xmin_entry.get())
+	if not is_number(xmax_entry.get()) or xmax_entry.get=="":
+		xmax_val = 100000
+	else:
+	 	xmax_val = float(xmax_entry.get())
 
-	# if not is_number(xmin_entry.get()) or xmin_entry.get=="":
-	# 	xmin_val = -100000
-	# else:
-	# 	xmin_val = float(xmin_entry.get())
-	# if not is_number(xmax_entry.get()) or xmax_entry.get=="":
-	# 	xmax_val = 100000
-	# else:
-	# 	xmax_val = float(xmax_entry.get())
-
-	# if not is_number(ymin_entry.get()) or ymin_entry.get=="":
-	# 	ymin_val = -100000
-	# else:
-	# 	ymin_val = float(ymin_entry.get())
-	# if not is_number(ymax_entry.get()) or ymax_entry.get=="":
-	# 	ymax_val = 100000
-	# else:
-	# 	ymax_val = float(ymax_entry.get())
+	if not is_number(ymin_entry.get()) or ymin_entry.get=="":
+	 	ymin_val = -100000
+	else:
+	 	ymin_val = float(ymin_entry.get())
+	if not is_number(ymax_entry.get()) or ymax_entry.get=="":
+	 	ymax_val = 100000
+	else:
+	 	ymax_val = float(ymax_entry.get())
+	'''
 
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 
@@ -421,7 +425,7 @@ def init():
 	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0, 15))
 
 	Label(left_frame, text="Curve Smoothing", justify = "center", padx = 20).pack()
-	s2 = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_thresh2)
+	s2 = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
 	s2.pack(padx=20, pady=(0, 20))
 
 	choice = tkinter.IntVar()
