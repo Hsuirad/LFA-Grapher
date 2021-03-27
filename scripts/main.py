@@ -37,8 +37,10 @@ if 'cropped' not in os.listdir('../resources'):
 
 #for when the user hits "X" instead of the "Exit" button
 def on_closing():
-    if tkinter.messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
-        root.destroy()
+	if tkinter.messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
+		print("Exited")
+		root.quit()
+		root.destroy()
 
 #presents a help window with documentation on how to use our program, will make it read from the README.md file later
 def help_window():
