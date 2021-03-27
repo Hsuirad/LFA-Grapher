@@ -123,7 +123,7 @@ def thresh_and_crop():
 	imtemp = Image.open('../resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	
 	im1 = ImageTk.PhotoImage(imtemp)
-	c.itemconfigure(theimg, image = im1)
+	image_canvas.itemconfigure(theimg, image = im1)
 
 def find_roi():
 	try:
@@ -173,7 +173,7 @@ def button_press():
 	root.filename = filedialog.askopenfilename(initialdir = "../",title = "Select image file",filetypes = (("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
 def update_choice():
-	q["state"] = "normal"
+	peak_bounds_button["state"] = "normal"
 
 	global grabbed
 	grabbed = choice.get()
@@ -190,8 +190,8 @@ def smooth(interval, window_size):
 	return np.convolve(interval, window, 'valid')
 
 def choose_peak_bounds():
-	b["state"] = "normal"
-	e["state"] = "normal"
+	save_button["state"] = "normal"
+	preview_button["state"] = "normal"
 	global bounds
 
 	return bounds
@@ -388,7 +388,7 @@ def make_graph():
 
 	global im1
 	im1 = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
-	c.itemconfigure(theimg, image = im1)
+	image_canvas.itemconfigure(theimg, image = im1)
 
 	os.remove('../resources/temp.png')
 
@@ -403,7 +403,7 @@ def save_graph():
 
 def init():
 	# setting variables to global scope that need to be accessed outside of init()
-	global c, q, n, e, b, im1, choice, theimg
+	global image_canvas, peak_bounds_button, preview_button, save_button, im1, choice, theimg
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -419,14 +419,14 @@ def init():
 	Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
 
 	Label(left_frame, text="Threshold Slider", justify = "center").pack(pady=(0,5))
-	s = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
-	s.pack(padx=20, pady=(0, 10))
+	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
+	threshold_slider.pack(padx=20, pady=(0, 10))
 
 	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0, 15))
 
 	Label(left_frame, text="Curve Smoothing", justify = "center", padx = 20).pack()
-	s2 = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
-	s2.pack(padx=20, pady=(0, 20))
+	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
+	curve_smoothing_slider.pack(padx=20, pady=(0, 20))
 
 	choice = tkinter.IntVar()
 	choice.set(1)
@@ -441,8 +441,8 @@ def init():
 		i+=1
 
 	w, h = plot_disp_size
-	c = Canvas(middle_frame, width=w, height = h) #height = width too
-	c.pack(padx=(20, 0), pady=(0,5))
+	image_canvas = Canvas(middle_frame, width=w, height = h) #height = width too
+	image_canvas.pack(padx=(20, 0), pady=(0,5))
 
 
 	sub_middle_frame = Frame(middle_frame)
@@ -460,20 +460,20 @@ def init():
 	v_shift_box.grid(column=1,row=1,pady=(10,0))
 	v_shift.trace("w", lambda *args: character_limit(v_shift))
 
-	q = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
-	q.pack(side="left", padx = (10, 5), pady = (40, 10))
-	q["state"] = "disable"
+	peak_bounds_button = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
+	peak_bounds_button.pack(side="left", padx = (10, 5), pady = (40, 10))
+	peak_bounds_button["state"] = "disable"
 
-	e = Button(left_frame, text="Preview", command=make_graph)
-	e.pack(side="left", padx = (5, 5), pady=(40, 10))
-	e["state"] = "disable"
+	preview_button = Button(left_frame, text="Preview", command=make_graph)
+	preview_button.pack(side="left", padx = (5, 5), pady=(40, 10))
+	preview_button["state"] = "disable"
 
-	b = Button(left_frame, text="Save to .png", command=save_graph)
-	b.pack(side="left", padx = (5, 5), pady = (40, 10))
-	b["state"] = "disable"
+	save_button = Button(left_frame, text="Save to .png", command=save_graph)
+	save_button.pack(side="left", padx = (5, 5), pady = (40, 10))
+	save_button["state"] = "disable"
 
 	im1 = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
-	theimg = c.create_image(0, 0, image=im1, anchor = 'nw')
+	theimg = image_canvas.create_image(0, 0, image=im1, anchor = 'nw')
 
 
 # makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925, ...)
