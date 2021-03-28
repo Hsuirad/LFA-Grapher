@@ -51,6 +51,10 @@ def help_window():
 	text = "This is \na test"
 	label = Label(window, text=text).pack(anchor='nw') 
 
+#opens dialog to select image
+def select_file():
+	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
+
 #threshold slider
 def update_thresh(val):
 	global thresh_val
@@ -58,30 +62,25 @@ def update_thresh(val):
 	thresh_and_crop()
 	print("Thresh: " + thresh_val)
 
-#smoothing filter slider
-def update_smooth(val):
-	global smooth_val
-	smooth_val = val
-	print("Smooth: " + smooth_val)
-
+#image processing
 def thresh_and_crop():
 	try:
 		img_path = root.filename
-		leave=False
+		leave = False
 	except:
-		leave =True
+		leave = True
 
 	if leave:
 		return
 
 	#thresholding
 	img = cv2.imread(img_path)
-	gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-	_, thresh_img = cv2.threshold(gray_img, 255*(float(thresh_val)/100), 255, cv2.THRESH_TOZERO)
+	_, img_thresh = cv2.threshold(img_gray, 255*(float(thresh_val)/100), 255, cv2.THRESH_TOZERO)
 
 	#cropping
-	cnt, hierarchy = cv2.findContours(thresh_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+	cnt, hierarchy = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
 	cnt_sort = sorted(cnt, key=cv2.contourArea)
 
 	'''
@@ -89,7 +88,7 @@ def thresh_and_crop():
 	print(cnt_sort, cv2.pointPolygonTest(cnt_sort[-1], (0, 0), False))
 	'''
 
-	cv2.drawContours(thresh_img, cnt_sort[:-2], -1, 0, -1)
+	cv2.drawContours(img_thresh, cnt_sort[:-2], -1, 0, -1)
 	cnt_sort = cnt_sort[-2:]
 
 	xmin = cnt_sort[-1][0][0][0]
@@ -102,7 +101,6 @@ def thresh_and_crop():
 		for j in range(len(cnt_sort[i])):
 			for z in range(len(cnt_sort[i][j])):
 				f = cnt_sort[i][j]
-
 				if f[z][0] < xmin:
 					xmin = f[z][0]
 				if f[z][0] > xmax:
@@ -114,17 +112,17 @@ def thresh_and_crop():
 	
 	print((ymax, ymin, xmin, xmax))
 	
-	crop = thresh_img[ymin:ymax, xmin:xmax]
+	img_crop = img_thresh[ymin:ymax, xmin:xmax]
 
 	#saves cropped image in cropped folder
-	cv2.imwrite('../resources/cropped/' + os.path.split(img_path)[1], crop)
+	cv2.imwrite('../resources/cropped/' + os.path.split(img_path)[1], img_crop)
 
-	global im1
+	global im
 	imtemp = Image.open('../resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
-	
-	im1 = ImageTk.PhotoImage(imtemp)
-	image_canvas.itemconfigure(theimg, image = im1)
+	im = ImageTk.PhotoImage(imtemp)
+	image_canvas.itemconfigure(imload, image=im)
 
+#finding regions of interest
 def find_roi():
 	try:
 		img_path = '../resources/cropped/' + os.path.split(root.filename)[1]
@@ -133,32 +131,69 @@ def find_roi():
 	
 	img_raw = cv2.imread(img_path)
 	
-	#select ROI function
+	#select ROI function 1 (top strip)
 	roi = cv2.selectROI(img_raw)
-
-	roi_cropped = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-
-	img_raw = cv2.imread(img_path)
+	roi_cropped1 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
 	
-	#select ROI function
+	#select ROI function 2 (bottom strip)
 	roi = cv2.selectROI(img_raw)
-
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-	cv2.imwrite("../resources/topline.jpeg",roi_cropped)
-	cv2.imwrite('../resources/bottomline.jpeg', roi_cropped2)
+	cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
+	cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
 
 	cv2.destroyAllWindows()
 
-def is_number(s):
+#smoothing filter slider
+def update_smooth(val):
+	global smooth_val
+	smooth_val = val
+	print("Smooth: " + smooth_val)
+
+#curve smoothing
+def smooth(interval, window_size):
+	window = np.ones(int(window_size))/float(window_size)
+	print("window {}".format(window))
+	return np.convolve(interval, window, 'valid')
+
+#updates after baseline selection
+def update_choice():
+	peak_bounds_button["state"] = "normal"
+
+	global baseline_grabbed
+	baseline_grabbed = baseline_choice.get()
+
 	try:
-		float(s)
+		_ = root.filename
+	except:
+		print("No file chosen")
+
+#choosing peak bounds for integration step 
+#NEEDS TO ADD AREA
+def choose_peak_bounds():
+	save_button["state"] = "normal"
+	preview_button["state"] = "normal"
+	global bounds
+
+	return bounds
+
+#makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
+def character_limit(p):
+	if len(p.get()) > 8 or is_number(p.get()) == False:
+		p.set(p.get()[:-1])
+
+#checks if value is a number
+def is_number(n):
+	try:
+		float(n)
 		return True
 	except:
-		if s == "-":
+		if n == "-":
 			return True
 		return False
 
+'''
+MIGHT USE LATER??
 def make_num(num):
 	if num > 3:
 		return str(num)+"th"
@@ -168,42 +203,16 @@ def make_num(num):
 		return "2nd"
 	else:
 		return "1st"
+'''
 
-def button_press():
-	root.filename = filedialog.askopenfilename(initialdir = "../",title = "Select image file",filetypes = (("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
-
-def update_choice():
-	peak_bounds_button["state"] = "normal"
-
-	global grabbed
-	grabbed = choice.get()
-
-	try:
-		_ = root.filename
-	except:
-		print("No file chosen")
-
-#curve smoothing
-def smooth(interval, window_size):
-	window = np.ones(int(window_size))/float(window_size)
-	print("window {}".format(window))
-	return np.convolve(interval, window, 'valid')
-
-def choose_peak_bounds():
-	save_button["state"] = "normal"
-	preview_button["state"] = "normal"
-	global bounds
-
-	return bounds
-
-
+#previews graph on right
 def make_graph():
-	
+
 	'''
 	UNCOMMENT LATER
 	folder_selected = filedialog.askdirectory(title='Choose Location to Save Data')
 	'''
-
+	#in case matplotlib crashes
 	try:
 		plt.clf()
 	except:
@@ -212,9 +221,7 @@ def make_graph():
 	control_line = Image.open('../resources/topline.jpeg').convert("L")
 	test_line = Image.open('../resources/bottomline.jpeg').convert("L")
 
-
-
-	# convert to numpy array
+	#convert to numpy array
 	np_control = np.array(control_line)
 	control_line_array = []
 
@@ -247,34 +254,12 @@ def make_graph():
 
 	print(len(x), len(y))
 
-	'''
-	xmin_val = xmax_val = ymin_val = ymax_val = 0
-
-	if not is_number(xmin_entry.get()) or xmin_entry.get=="":
-	 	xmin_val = -100000
-	else:
-		xmin_val = float(xmin_entry.get())
-	if not is_number(xmax_entry.get()) or xmax_entry.get=="":
-		xmax_val = 100000
-	else:
-	 	xmax_val = float(xmax_entry.get())
-
-	if not is_number(ymin_entry.get()) or ymin_entry.get=="":
-	 	ymin_val = -100000
-	else:
-	 	ymin_val = float(ymin_entry.get())
-	if not is_number(ymax_entry.get()) or ymax_entry.get=="":
-	 	ymax_val = 100000
-	else:
-	 	ymax_val = float(ymax_entry.get())
-	'''
-
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 
 	ax = plt.subplot(111)
 
-		#peak detection
-	if grabbed == 101:
+	#peak detection
+	if baseline_grabbed == 101:
 		x_avg = x[int(len(x)/2)]
 		x2_avg = x2[int(len(x2)/2)]
 
@@ -289,7 +274,7 @@ def make_graph():
 		print(minimum, np.argmin(np.array(x)))
 
 		x = [i - minimum for i in x]
-		x2 = [i - minimum for i in x2]
+		x2 = [i - minimum for i in x2]	
 	else:
 		x_min = x[np.argmin(np.array(x))]
 		x2_min = x2[np.argmin(np.array(x2))]
@@ -299,7 +284,7 @@ def make_graph():
 
 	highest_intensity = max(x[np.argmax(np.array(x))], x2[np.argmax(np.array(x2))])
 
-	#normalization ???? i already forgot check back later but looks like it
+	#converts values to percentages of intensity to nearest hundredth
 	for i in range(len(x)):
 		x[i] = round((float(x[i]) / float(highest_intensity)) * 100.00000, 2)
 	for i in range(len(x2)):
@@ -315,8 +300,8 @@ def make_graph():
 	right_peak = [float(str(clicked).split(', ')[0]), float(str(clicked).split(', ')[1])]
 	'''
 
-
 	'''
+	TESTPLOT AREA MODEL
 	t = np.arange(0, 10, 0.01) 
 	y = np.sin(t)+1
 	plt.plot(t, y) 
@@ -348,6 +333,7 @@ def make_graph():
 	plt.show() 
 	'''
 
+	#matplot plots
 	print(len(x), len(y))
 	plt.plot(x)
 	plt.plot(x2)
@@ -370,7 +356,9 @@ def make_graph():
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
 
 	plt.legend(["Top Line", "Bottom Line"], frameon=False, prop={'family': "Arial", "weight": 'bold', "size": 32})
+	
 	'''
+	PEAK ANNOTATION
 	for i in peaks_x:
 		plt.annotate('Peak: {}'.format(x[i]), xy = (i, x[i]))
 	for i in peaks_x2:
@@ -386,12 +374,13 @@ def make_graph():
 
 	plt.savefig("../resources/temp.png",bbox_inches='tight')
 
-	global im1
-	im1 = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
-	image_canvas.itemconfigure(theimg, image = im1)
+	global im
+	im = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
+	image_canvas.itemconfigure(imload, image=im)
 
 	os.remove('../resources/temp.png')
 
+#saves graph NEEDS TO ALSO EXPORT EXCEL DATA
 def save_graph():
 	#plt.savefig(bbox_inches='tight')
 	f = filedialog.asksaveasfilename(defaultextension=".png")
@@ -400,10 +389,10 @@ def save_graph():
 	elif f is None:
 		return
 	
-
+#initializes tkinter GUI
 def init():
 	# setting variables to global scope that need to be accessed outside of init()
-	global image_canvas, peak_bounds_button, preview_button, save_button, im1, choice, theimg
+	global image_canvas, peak_bounds_button, preview_button, save_button, baseline_choice, im, imload
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -414,73 +403,65 @@ def init():
 	right_frame = Frame(root)
 	right_frame.pack(side="right")
 
-	Button(left_frame, text="Help", command = help_window).pack(anchor='nw', padx=(10, 0),pady=(0, 10))
+	sub_middle_frame = Frame(middle_frame)
+	sub_middle_frame.pack(side="bottom", pady=(0,10))
 
-	Button(left_frame, text="Select a file", command=button_press).pack(pady=(0, 10))
+	#left side inputs
+	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(0,10))
 
-	Label(left_frame, text="Threshold Slider", justify = "center").pack(pady=(0,5))
+	Button(left_frame, text="Select a file", command=select_file).pack(pady=(0,10))
+
+	Label(left_frame, text="Threshold Slider", justify="center").pack(pady=(0,5))
 	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
-	threshold_slider.pack(padx=20, pady=(0, 10))
+	threshold_slider.pack(padx=20, pady=(0,10))
 
-	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0, 15))
+	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0,15))
 
-	Label(left_frame, text="Curve Smoothing", justify = "center", padx = 20).pack()
+	Label(left_frame, text="Curve Smoothing", justify="center", padx=20).pack()
 	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
-	curve_smoothing_slider.pack(padx=20, pady=(0, 20))
+	curve_smoothing_slider.pack(padx=20, pady=(0,20))
 
-	choice = tkinter.IntVar()
-	choice.set(1)
-
+	baseline_choice = tkinter.IntVar()
+	baseline_choice.set(1)
 	modes = [("Midpoint", 101), ("Lowest Value", 102)]
-
 	Label(left_frame, text="Baseline from:", justify = "left", padx = 20).pack()
 	i=0
-
 	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=choice, value=val).pack(anchor ='w')
+		Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=baseline_choice, value=val).pack(anchor ='w')
 		i+=1
 
-	w, h = plot_disp_size
-	image_canvas = Canvas(middle_frame, width=w, height = h) #height = width too
-	image_canvas.pack(padx=(20, 0), pady=(0,5))
-
-
-	sub_middle_frame = Frame(middle_frame)
-	sub_middle_frame.pack(side="bottom", pady=(0, 10))
-
-	Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0,row=0,pady=(10,0))
-	h_shift = StringVar()
-	h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-	h_shift_box.grid(column=1,row=0,pady=(10,0))
-	h_shift.trace("w", lambda *args: character_limit(h_shift))
-
-	Label(sub_middle_frame, text="Vertical shift lines value (ex: -10.5): ").grid(column=0,row=1,pady=(10,0))
-	v_shift = StringVar()
-	v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
-	v_shift_box.grid(column=1,row=1,pady=(10,0))
-	v_shift.trace("w", lambda *args: character_limit(v_shift))
-
+	#bottom row inputs
 	peak_bounds_button = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
-	peak_bounds_button.pack(side="left", padx = (10, 5), pady = (40, 10))
+	peak_bounds_button.pack(side="left", padx = (10,5), pady = (40,10))
 	peak_bounds_button["state"] = "disable"
 
 	preview_button = Button(left_frame, text="Preview", command=make_graph)
-	preview_button.pack(side="left", padx = (5, 5), pady=(40, 10))
+	preview_button.pack(side="left", padx = (5,5), pady=(40,10))
 	preview_button["state"] = "disable"
 
 	save_button = Button(left_frame, text="Save to .png", command=save_graph)
-	save_button.pack(side="left", padx = (5, 5), pady = (40, 10))
+	save_button.pack(side="left", padx = (5,5), pady = (40,10))
 	save_button["state"] = "disable"
 
-	im1 = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
-	theimg = image_canvas.create_image(0, 0, image=im1, anchor = 'nw')
+	Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0, row=0, pady=(10,0))
+	h_shift = StringVar()
+	h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+	h_shift_box.grid(column=1, row=0, pady=(10,0))
+	h_shift.trace("w", lambda *args:character_limit(h_shift))
 
+	Label(sub_middle_frame, text="Vertical shift lines value (ex: -10.5): ").grid(column=0, row=1, pady=(10,0))
+	v_shift = StringVar()
+	v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
+	v_shift_box.grid(column=1, row=1, pady=(10,0))
+	v_shift.trace("w", lambda *args:character_limit(v_shift))
 
-# makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925, ...)
-def character_limit(e):
-	if len(e.get()) > 8 or is_number(e.get()) == False:
-		e.set(e.get()[:-1])
+	#graph on right
+	width, height = plot_disp_size
+	image_canvas = Canvas(middle_frame, width=width, height=height) #height = width too
+	image_canvas.pack(padx=(20,0), pady=(0,5))
 
+	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
+	imload = image_canvas.create_image(0, 0, image=im, anchor = 'nw')
 
 # __name__ is a preset python variable where if you're running this as the main file and not as some imported library, then __name__ is set to __main__
 if __name__ == '__main__':
