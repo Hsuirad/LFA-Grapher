@@ -1,3 +1,4 @@
+#this needs some cleaning
 import statsmodels.api as sm
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
