@@ -159,6 +159,7 @@ def smooth(interval, window_size):
 #updates after baseline selection
 def update_choice():
 	bounds_button["state"] = "normal"
+	preview_button["state"] = "normal"
 
 	global baseline_grabbed
 	baseline_grabbed = baseline_choice.get()
@@ -172,38 +173,10 @@ def update_choice():
 #NEEDS TO ADD AREA
 def choose_peak_bounds():
 	export_button["state"] = "normal"
-	preview_button["state"] = "normal"
+
 	global bounds
 
 	return bounds
-
-#makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
-def character_limit(p):
-	if len(p.get()) > 8 or is_number(p.get()) == False:
-		p.set(p.get()[:-1])
-
-#checks if value is a number
-def is_number(n):
-	try:
-		float(n)
-		return True
-	except:
-		if n == "-":
-			return True
-		return False
-
-'''
-MIGHT USE LATER??
-def make_num(num):
-	if num > 3:
-		return str(num)+"th"
-	elif num == 3:
-		return "3rd"
-	elif num == 2:
-		return "2nd"
-	else:
-		return "1st"
-'''
 
 #previews graph
 def make_graph():
@@ -237,6 +210,7 @@ def make_graph():
 	x1 = [float(sum(l))/len(l) for l in zip(*top_line_array)]
 	x2 = [float(sum(l))/len(l) for l in zip(*bottom_line_array)]
 
+	#smoothing
 	if int(smooth_val) > 0:
 		print(smooth_val)
 		print("init x1 {}".format(x1))
@@ -347,16 +321,16 @@ def make_graph():
 	ax.yaxis.set_minor_locator(AutoMinorLocator(2))
 	ax.legend()
 	plt.setp(ax.spines.values(), linewidth=1.5)
-	ax.tick_params(which="minor", width=1, length=5, labelsize=14)
-	ax.tick_params(which="major", width=1.5, length=15, labelsize=32)
+	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
+	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
 
 	plt.ylabel('Intensity (a.u.)', **hfont)
-	plt.xlabel("Pixel distance", **hfont)
+	plt.xlabel('Pixel distance', **hfont)
 
 	plt.setp(ax.get_yticklabels(), fontweight="bold", fontname="Arial")
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
 
-	plt.legend(["Top Line", "Bottom Line"], frameon=False, prop={'family': "Arial", "weight": 'bold', "size": 32})
+	plt.legend(['Top Line', 'Bottom Line'], frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
 	
 	'''
 	PEAK ANNOTATION
@@ -373,7 +347,7 @@ def make_graph():
 	figure.set_size_inches(15, 10)
 
 	global im
-	plt.savefig("../resources/temp.png", bbox_inches='tight')
+	plt.savefig('../resources/temp.png', bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
@@ -382,12 +356,40 @@ def make_graph():
 #saves graph
 #NEEDS TO ALSO EXPORT EXCEL DATA
 def save_graph():
-	f = filedialog.asksaveasfilename(defaultextension=".png")
+	f = filedialog.asksaveasfilename(defaultextension='.png')
 	if f:
 		plt.savefig(f, bbox_inches='tight')
 	elif f is None:
 		return
-	
+
+#makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
+def character_limit(p):
+	if len(p.get()) > 8 or is_number(p.get()) == False:
+		p.set(p.get()[:-1])
+
+#checks if value is a number
+def is_number(n):
+	try:
+		float(n)
+		return True
+	except:
+		if n == "-":
+			return True
+		return False
+
+'''
+MIGHT USE LATER??
+def make_ordinal(num):
+	if num > 3:
+		return str(num)+"th"
+	elif num == 3:
+		return "3rd"
+	elif num == 2:
+		return "2nd"
+	else:
+		return "1st"
+'''
+
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
@@ -406,7 +408,7 @@ def init():
 	sub_middle_frame.pack(side="bottom", pady=(0,10))
 
 	#left side inputs
-	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(0,10))
+	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(10,10))
 
 	Button(left_frame, text="Select a file", command=select_file).pack(pady=(0,10))
 
@@ -423,25 +425,27 @@ def init():
 	baseline_choice = tkinter.IntVar()
 	baseline_choice.set(1)
 	modes = [("Midpoint", 101), ("Lowest Value", 102)]
-	Label(left_frame, text="Baseline from:", justify = "left", padx = 20).pack()
+	Label(left_frame, text="Baseline from:", justify="left", padx=20).pack()
 	i=0
 	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron = 1, command=update_choice, justify ="left", padx = 20,  variable=baseline_choice, value=val).pack(anchor ='w')
+		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_choice, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
 		i+=1
 
 	#bottom row inputs
 	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)
-	bounds_button.pack(side="left", padx = (10,5), pady = (40,10))
+	bounds_button.pack(side="left", padx=(15,10), pady=(30,10))
 	bounds_button["state"] = "disable"
 
 	preview_button = Button(left_frame, text="Preview", command=make_graph)
-	preview_button.pack(side="left", padx = (5,5), pady=(40,10))
+	preview_button.pack(side="left", padx=(10,10), pady=(30,10))
 	preview_button["state"] = "disable"
 
 	export_button = Button(left_frame, text="Export", command=save_graph)
-	export_button.pack(side="left", padx = (5,5), pady = (40,10))
+	export_button.pack(side="left", padx=(10,0), pady=(30,10))
 	export_button["state"] = "disable"
 
+	'''
+	MIGRATING TO A SLIDER
 	Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0, row=0, pady=(10,0))
 	h_shift = StringVar()
 	h_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
@@ -453,11 +457,12 @@ def init():
 	v_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
 	v_shift_box.grid(column=1, row=1, pady=(10,0))
 	v_shift.trace("w", lambda *args:character_limit(v_shift))
+	'''
 
 	#graph on right
 	width, height = plot_disp_size
 	image_canvas = Canvas(middle_frame, width=width, height=height) #height = width too
-	image_canvas.pack(padx=(20,0), pady=(0,5))
+	image_canvas.pack(padx=(20,0), pady=(0,0))
 
 	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  #PIL solution
 	imload = image_canvas.create_image(0, 0, image=im, anchor='nw')
