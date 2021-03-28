@@ -22,7 +22,7 @@ root = tkinter.Tk()
 root.title("Intensity Grapher")
 smooth_val = 0
 
-# ratio is 3:2
+#ratio is 3:2
 plot_disp_size = (int(370*1.5), 370)
 
 text_entry_arr = []
