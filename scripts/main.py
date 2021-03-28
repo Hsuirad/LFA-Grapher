@@ -154,11 +154,11 @@ def update_smooth(val):
 def smooth(interval, window_size):
 	window = np.ones(int(window_size))/float(window_size)
 	print("window {}".format(window))
-	return np.convolve(interval, window, 'valid')
+	return np.convolve(interval, window, mode='valid')
 
 #updates after baseline selection
 def update_choice():
-	peak_bounds_button["state"] = "normal"
+	bounds_button["state"] = "normal"
 
 	global baseline_grabbed
 	baseline_grabbed = baseline_choice.get()
@@ -171,7 +171,7 @@ def update_choice():
 #choosing peak bounds for integration step 
 #NEEDS TO ADD AREA
 def choose_peak_bounds():
-	save_button["state"] = "normal"
+	export_button["state"] = "normal"
 	preview_button["state"] = "normal"
 	global bounds
 
@@ -205,7 +205,7 @@ def make_num(num):
 		return "1st"
 '''
 
-#previews graph on right
+#previews graph
 def make_graph():
 
 	'''
@@ -218,77 +218,74 @@ def make_graph():
 	except:
 		print('You should be impressed you managed to get this error')
 		
-	control_line = Image.open('../resources/topline.jpeg').convert("L")
-	test_line = Image.open('../resources/bottomline.jpeg').convert("L")
+	top_line = Image.open('../resources/topstrip.jpeg').convert("L")
+	bottom_line = Image.open('../resources/bottomstrip.jpeg').convert("L")
 
 	#convert to numpy array
-	np_control = np.array(control_line)
-	control_line_array = []
-
-	for elem in np_control:
+	np_top = np.array(top_line)
+	top_line_array = []
+	for elem in np_top:
 		if elem.sum() != 0:
-			control_line_array.append(elem)
+			top_line_array.append(elem)
 			
-	np_test = np.array(test_line)
-	test_line_array = []
-	for elem in np_test:
+	np_bottom = np.array(bottom_line)
+	bottom_line_array = []
+	for elem in np_bottom:
 		if elem.sum() != 0:
-			test_line_array.append(elem)
+			bottom_line_array.append(elem)
 
-	x = [float(sum(l))/len(l) for l in zip(*control_line_array)]
-	x2 = [float(sum(l))/len(l) for l in zip(*test_line_array)]
+	x1 = [float(sum(l))/len(l) for l in zip(*top_line_array)]
+	x2 = [float(sum(l))/len(l) for l in zip(*bottom_line_array)]
 
 	if int(smooth_val) > 0:
 		print(smooth_val)
-		print("forst x {}".format(x))
-		print(float(len(x)/3 * (float(float(smooth_val)/100.000))))
-		x = smooth(x, int(len(x)/3 * (float(float(smooth_val))/100.000)))
+		print("init x1 {}".format(x1))
+		print(float(len(x1)/3 * (float(float(smooth_val)/100.000))))
+
+		x1 = smooth(x1, int(len(x1)/3 * (float(float(smooth_val))/100.000)))
 		x2 = smooth(x2, int(len(x2)/3 * (float(float(smooth_val))/100.000)))
-		print("second x {}".format(x))
-		x = x[1:(len(x) - 1)]
+
+		print("smoothed x1 {}".format(x1))
+		
+		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
-
 	
-	y = np.arange(len(x))
-	y2 = np.arange(len(x2))
+	count1 = np.arange(len(x1))
+	count2 = np.arange(len(x2))
 
-	print(len(x), len(y))
-
-	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
-
-	ax = plt.subplot(111)
+	print(len(x1), len(count1))
 
 	#peak detection
-	if baseline_grabbed == 101:
-		x_avg = x[int(len(x)/2)]
-		x2_avg = x2[int(len(x2)/2)]
+	if baseline_grabbed == 101: #midpoint
+		x1_mid = x1[int(len(x1)/2)]
+		x2_mid = x2[int(len(x2)/2)]
 
-		x = [i - x_avg for i in x]
-		x2 = [i - x2_avg for i in x2]
+		x1 = [i - x1_mid for i in x1]
+		x2 = [i - x2_mid for i in x2]
 
-		x_min = x[0]
-		x2_min = x2[0]
+		minimum = min(x1[np.argmin(np.array(x1))], x2[np.argmin(np.array(x2))])
 
-		minimum = min(x[np.argmin(np.array(x))], x2[np.argmin(np.array(x2))])
+		print(minimum, np.argmin(np.array(x1)))
 
-		print(minimum, np.argmin(np.array(x)))
-
-		x = [i - minimum for i in x]
+		x1 = [i - minimum for i in x1]
 		x2 = [i - minimum for i in x2]	
-	else:
-		x_min = x[np.argmin(np.array(x))]
+	
+	elif baseline_grabbed == 102: #lowest value
+		x1_min = x1[np.argmin(np.array(x1))]
 		x2_min = x2[np.argmin(np.array(x2))]
 		
-		x = [i - x_min for i in x]
+		x1 = [i - x1_min for i in x1]
 		x2 = [i - x2_min for i in x2]
+	
+	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
+	highest_intensity = max(x1[np.argmax(np.array(x1))], x2[np.argmax(np.array(x2))])
 
-	highest_intensity = max(x[np.argmax(np.array(x))], x2[np.argmax(np.array(x2))])
-
-	#converts values to percentages of intensity to nearest hundredth
-	for i in range(len(x)):
-		x[i] = round((float(x[i]) / float(highest_intensity)) * 100.00000, 2)
+	for i in range(len(x1)):
+		x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
 	for i in range(len(x2)):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
+
+	print("scaled intensity: {}".format(x1))
 
 	'''
 	plt.clf()
@@ -333,9 +330,13 @@ def make_graph():
 	plt.show() 
 	'''
 
-	#matplot plots
-	print(len(x), len(y))
-	plt.plot(x)
+	#matplot plotting
+	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
+	ax = plt.subplot(111)
+
+	print(len(x1), len(count1))
+
+	plt.plot(x1)
 	plt.plot(x2)
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
@@ -360,29 +361,27 @@ def make_graph():
 	'''
 	PEAK ANNOTATION
 	for i in peaks_x:
-		plt.annotate('Peak: {}'.format(x[i]), xy = (i, x[i]))
+		plt.annotate('Peak: {}'.format(x1[i]), xy = (i, x1[i]))
 	for i in peaks_x2:
 		plt.annotate('Peak: {}'.format(x2[i]), xy = (i, x2[i]))
 
 	print(peaks_x, peaks_x2)
 	'''
 
-	# plt.show()
+	#resizing
 	figure = plt.gcf()
-
 	figure.set_size_inches(15, 10)
 
-	plt.savefig("../resources/temp.png",bbox_inches='tight')
-
 	global im
+	plt.savefig("../resources/temp.png", bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
 	os.remove('../resources/temp.png')
 
-#saves graph NEEDS TO ALSO EXPORT EXCEL DATA
+#saves graph
+#NEEDS TO ALSO EXPORT EXCEL DATA
 def save_graph():
-	#plt.savefig(bbox_inches='tight')
 	f = filedialog.asksaveasfilename(defaultextension=".png")
 	if f:
 		plt.savefig(f, bbox_inches='tight')
@@ -391,8 +390,8 @@ def save_graph():
 	
 #initializes tkinter GUI
 def init():
-	# setting variables to global scope that need to be accessed outside of init()
-	global image_canvas, peak_bounds_button, preview_button, save_button, baseline_choice, im, imload
+	#setting variables to global scope that need to be accessed outside of init()
+	global image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -431,17 +430,17 @@ def init():
 		i+=1
 
 	#bottom row inputs
-	peak_bounds_button = Button(left_frame, text="Choose peak bounds", command=choose_peak_bounds)
-	peak_bounds_button.pack(side="left", padx = (10,5), pady = (40,10))
-	peak_bounds_button["state"] = "disable"
+	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)
+	bounds_button.pack(side="left", padx = (10,5), pady = (40,10))
+	bounds_button["state"] = "disable"
 
 	preview_button = Button(left_frame, text="Preview", command=make_graph)
 	preview_button.pack(side="left", padx = (5,5), pady=(40,10))
 	preview_button["state"] = "disable"
 
-	save_button = Button(left_frame, text="Save to .png", command=save_graph)
-	save_button.pack(side="left", padx = (5,5), pady = (40,10))
-	save_button["state"] = "disable"
+	export_button = Button(left_frame, text="Export", command=save_graph)
+	export_button.pack(side="left", padx = (5,5), pady = (40,10))
+	export_button["state"] = "disable"
 
 	Label(sub_middle_frame, text="Horizontal shift lines value (ex: -10.5): ").grid(column=0, row=0, pady=(10,0))
 	h_shift = StringVar()
@@ -460,10 +459,10 @@ def init():
 	image_canvas = Canvas(middle_frame, width=width, height=height) #height = width too
 	image_canvas.pack(padx=(20,0), pady=(0,5))
 
-	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  # PIL solution
-	imload = image_canvas.create_image(0, 0, image=im, anchor = 'nw')
+	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  #PIL solution
+	imload = image_canvas.create_image(0, 0, image=im, anchor='nw')
 
-# __name__ is a preset python variable where if you're running this as the main file and not as some imported library, then __name__ is set to __main__
+#__name__ is a preset python variable where if you're running this as the main file and not as some imported library, then __name__ is set to __main__
 if __name__ == '__main__':
 	init() #builds all the buttons and frames
 	
