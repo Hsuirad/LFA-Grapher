@@ -163,7 +163,6 @@ def smooth(interval, window_size):
 
 #updates after baseline selection
 def update_choice():
-	bounds_button["state"] = "normal"
 	preview_button["state"] = "normal"
 
 	global baseline_grabbed
@@ -187,24 +186,33 @@ def update_h_shift(val):
 	global h_shift_val
 	h_shift_val = val
 	print("Horizontal Shift: " + h_shift_val)
+	make_graph()
+	os.remove('../resources/temp.png')
 
 def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
 	print("Vertical Shift: " + v_shift_val)
+	make_graph()
+	os.remove('../resources/temp.png')
 
 def preview_graph():
 	curve_smoothing_slider['state'] = 'normal'
 	make_graph()
-	os.remove('../resources/temp.png')
+	os.remove('../resources/temp.png')	
+	bounds_button['state'] = 'normal'
+	curve_smoothing_slider['state'] = 'normal'
+	horizontal_shift_slider['state'] = 'normal'
+	vertical_shift_slider['state'] = 'normal'
 
 #previews graph
 def make_graph():
-
+	
 	'''
 	UNCOMMENT LATER
 	folder_selected = filedialog.askdirectory(title='Choose Location to Save Data')
 	'''
+
 	#in case matplotlib crashes
 	try:
 		plt.clf()
@@ -503,12 +511,12 @@ def init():
 	v_shift.trace("w", lambda *args:character_limit(v_shift))
 	'''
 
-	Label(sub_middle_frame, text="Horiz. Shift").grid(column=0, row=1, pady=(0,0))
+	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, pady=(0,0))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
 
-	Label(sub_middle_frame, text="Vert. Shift").grid(column=1, row=1, pady=(0,0))
+	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1, pady=(0,0))
 	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
 	vertical_shift_slider['state'] = 'disable'
