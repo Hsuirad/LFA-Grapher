@@ -171,7 +171,7 @@ def update_choice():
 		print("No file chosen")
 
 #choosing peak bounds for integration step 
-#NEEDS TO ADD AREA
+#NEEDS TO ADD AREA and do all the calculation here so it can iterate regardless of the curve bc some only have one peak
 def choose_peak_bounds():
 	export_button["state"] = "normal"
 
@@ -224,13 +224,8 @@ def make_graph():
 		
 		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
-	
-	count1 = np.arange(len(x1))
-	count2 = np.arange(len(x2))
 
-	print(len(x1), len(count1))
-
-	#peak detection
+	#baseline adjustment
 	if baseline_grabbed == 101: #midpoint
 		x1_mid = x1[int(len(x1)/2)]
 		x2_mid = x2[int(len(x2)/2)]
@@ -245,7 +240,7 @@ def make_graph():
 		x1 = [i - minimum for i in x1]
 		x2 = [i - minimum for i in x2]	
 	
-	elif baseline_grabbed == 102: #lowest value
+	if baseline_grabbed == 102: #lowest value
 		x1_min = x1[np.argmin(np.array(x1))]
 		x2_min = x2[np.argmin(np.array(x2))]
 		
@@ -262,9 +257,39 @@ def make_graph():
 
 	print("scaled intensity: {}".format(x1))
 
+	#new auto peak detector for initial horizontal adjustment
+	x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
+	x2_peaks, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)
+
+	x1_peak = 0
+	x2_peak = 0
+
+	for i in x1_peaks:
+		if x1[i] > x1[x1_peak]:
+			x1_peak = i
+
+	for i in x2_peaks:
+		if x2[i] > x2[x2_peak]:
+			x2_peak = i
+
+	print("peak 1 index: {}".format(x1_peak))
+	print("peak 2 index: {}".format(x2_peak))
+
+	x1_final = x1
+	x2_final = x2
+
+	if x1_peak > x2_peak:
+		x1_final = x1[x1_peak-x2_peak:]
+	
+	if x2_peak > x1_peak:
+		x2_final = x2[x2_peak-x1_peak:]
+
+	#h and v shift 
+
+
 	'''
 	plt.clf()
-	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Area Bounds Selection)")
+	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Bounds Selection)")
 	plt.plot(x)
 
 	clicked = plt.ginput(2)
@@ -309,10 +334,8 @@ def make_graph():
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 	ax = plt.subplot(111)
 
-	print(len(x1), len(count1))
-
-	plt.plot(x1)
-	plt.plot(x2)
+	plt.plot(x1_final)
+	plt.plot(x2_final)
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -362,6 +385,17 @@ def save_graph():
 		plt.savefig(f, bbox_inches='tight')
 	elif f is None:
 		return
+
+def update_h_shift(val):
+	global h_shift_val
+	h_shift_val = val
+	print("Horizontal Shift: " + h_shift_val)
+
+def update_v_shift(val):
+	global v_shift_val
+	v_shift_val = val
+	print("Vertical Shift: " + v_shift_val)
+
 
 #makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
 def character_limit(p):
@@ -459,6 +493,14 @@ def init():
 	v_shift_box.grid(column=1, row=1, pady=(10,0))
 	v_shift.trace("w", lambda *args:character_limit(v_shift))
 	'''
+
+	Label(sub_middle_frame, text="Horizontal Shift", justify="left", padx=0).pack()
+	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_h_shift)
+	horizontal_shift_slider.pack(padx=20, pady=0)
+
+	Label(sub_middle_frame, text="Vertical Shift", justify="right", padx=0).pack()
+	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_v_shift)
+	horizontal_shift_slider.pack(padx=20, pady=0)
 
 	#graph on right
 	width, height = plot_disp_size
