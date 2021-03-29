@@ -16,6 +16,7 @@ from matplotlib.ticker import (AutoMinorLocator)
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from tkinter import Radiobutton, Entry, Frame, Button, StringVar, filedialog, Scale, Canvas, PhotoImage, Label
 import random
+from shutil import rmtree
 
 #make GUI
 root = tkinter.Tk()
@@ -33,11 +34,11 @@ text_box_arr = []
 bounds = []
 
 #creates resource folder in path
-if 'resources' not in os.listdir('../'):
-	os.mkdir('../resources')
+if 'temp_resources' not in os.listdir('../'):
+	os.mkdir('../temp_resources')
 
-if 'cropped' not in os.listdir('../resources'):
-	os.mkdir('../resources/cropped')
+if 'cropped' not in os.listdir('../temp_resources'):
+	os.mkdir('../temp_resources/cropped')
 
 #for exiting the program
 def on_closing():
@@ -45,6 +46,7 @@ def on_closing():
 		print("Exited")
 		root.quit()
 		root.destroy()
+		rmtree('../temp_resources')
 
 #presents a help window with documentation on how to use our program, will make it read from the README.md file later
 def help_window():
@@ -114,17 +116,17 @@ def thresh_and_crop():
 	img_crop = img_thresh[ymin:ymax, xmin:xmax]
 
 	#saves cropped image in cropped folder
-	cv2.imwrite('../resources/cropped/' + os.path.split(img_path)[1], img_crop)
+	cv2.imwrite('../temp_resources/cropped/' + os.path.split(img_path)[1], img_crop)
 
 	global im
-	imtemp = Image.open('../resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
+	imtemp = Image.open('../temp_resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
 	image_canvas.itemconfigure(imload, image=im)
 
 #finding regions of interest
 def find_roi():
 	try:
-		img_path = '../resources/cropped/' + os.path.split(root.filename)[1]
+		img_path = '../temp_resources/cropped/' + os.path.split(root.filename)[1]
 	except:
 		return
 	
@@ -138,11 +140,8 @@ def find_roi():
 	roi = cv2.selectROI(img_raw)
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-	try:
-		cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
-		cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
-	except:
-		print("No ROI selected")
+	cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
+	cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
 
 	cv2.destroyAllWindows()
 
@@ -152,7 +151,7 @@ def update_smooth(val):
 	smooth_val = val
 	print("Smooth: " + smooth_val)
 	make_graph()
-	os.remove('../resources/temp.png')
+	os.remove('../temp_resources/temp.png')
 
 #curve smoothing
 def smooth(interval, window_size):
@@ -199,7 +198,8 @@ def peaks_and_areas(x1, x2):
 	global peaks, areas
 
 	#find peak
-		
+	#np.amax(np.array(x1))
+	#np.amax(np.array(x2))
 	#find area
 
 
@@ -210,19 +210,18 @@ def update_h_shift(val):
 	h_shift_val = val
 	print("Horizontal Shift: " + h_shift_val)
 	make_graph()
-	os.remove('../resources/temp.png')
+	os.remove('../temp_resources/temp.png')
 
 def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
 	print("Vertical Shift: " + v_shift_val)
 	make_graph()
-	os.remove('../resources/temp.png')
+	os.remove('../temp_resources/temp.png')
 
 def preview_graph():
 	make_graph()
-	os.remove('../resources/temp.png')	
-
+	os.remove('../temp_resources/temp.png')	
 	bounds_button['state'] = 'normal'
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
@@ -242,8 +241,8 @@ def make_graph():
 	except:
 		print('You should be impressed you managed to get this error')
 		
-	top_line = Image.open('../resources/topstrip.jpeg').convert("L")
-	bottom_line = Image.open('../resources/bottomstrip.jpeg').convert("L")
+	top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L")
+	bottom_line = Image.open('../temp_resources/bottomstrip.jpeg').convert("L")
 
 	#convert to numpy array
 	np_top = np.array(top_line)
@@ -428,8 +427,8 @@ def make_graph():
 	figure.set_size_inches(15, 10)
 
 	global im
-	plt.savefig('../resources/temp.png', bbox_inches='tight')
-	im = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
+	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
+	im = ImageTk.PhotoImage(Image.open('../temp_resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
 #saves graph
@@ -540,7 +539,7 @@ def init():
 	v_shift.trace("w", lambda *args:character_limit(v_shift))
 	'''
 
-	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, pady=(0,0))
+	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, pady=(0,20))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
