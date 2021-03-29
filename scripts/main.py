@@ -194,6 +194,7 @@ def update_v_shift(val):
 	print("Vertical Shift: " + v_shift_val)
 
 def preview_graph():
+	curve_smoothing_slider['state'] = 'normal'
 	make_graph()
 	os.remove('../resources/temp.png')
 
@@ -435,7 +436,7 @@ def make_ordinal(num):
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload
+	global curve_smoothing_slider, h_shift_slider, v_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -463,6 +464,7 @@ def init():
 	Label(left_frame, text="Curve Smoothing", justify="center", padx=20).pack()
 	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
 	curve_smoothing_slider.pack(padx=20, pady=(0,20))
+	curve_smoothing_slider['state'] = 'disable'
 
 	baseline_choice = tkinter.IntVar()
 	baseline_choice.set(1)
