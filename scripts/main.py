@@ -366,10 +366,10 @@ def make_graph(bounds = False):
 		t2 = [i+x1_peak-x2_peak for i in t2]
 
 	#manual h and v shift 
-<<<<<<< HEAD
+
 	t1 = [i+int(h_shift_val)/100*len(t1) for i in t1]
 	x1 = [i+int(v_shift_val)/100*len(x1) for i in x1]
-=======
+
 	t1 = [i+int(h_shift_val) for i in t1]
 	x1 = [i+int(v_shift_val) for i in x1]
 
@@ -401,8 +401,8 @@ def make_graph(bounds = False):
 	print(x) 
 	
 	plt.clf()
->>>>>>> 986b8992a05c762104a19c7387f38698095ddb53
-
+	'''
+	
 	#min of the concatenated y lists
 	low_val = min(list(np.append(x1, x2)))
 
