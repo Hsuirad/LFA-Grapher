@@ -142,7 +142,6 @@ def find_roi():
 	roi = cv2.selectROI(img_raw)
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-<<<<<<< HEAD
 	try:
 		cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
 		cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
@@ -152,10 +151,8 @@ def find_roi():
 	cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
 	cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
 
-=======
 	cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
 	cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
->>>>>>> 986b8992a05c762104a19c7387f38698095ddb53
 
 	cv2.destroyAllWindows()
 
@@ -191,11 +188,9 @@ def choose_peak_bounds():
 
 	global bounds
 
-<<<<<<< HEAD
 	make_graph(bounds = True)
 
 	return bounds
-=======
 	print("Choose the left and right bounds of integration") 
 	x = plt.ginput(2)
 
@@ -222,7 +217,6 @@ def peaks_and_areas(x1, x2):
 
 
 	return peaks, areas
->>>>>>> 986b8992a05c762104a19c7387f38698095ddb53
 
 def update_h_shift(val):
 	global h_shift_val
@@ -242,6 +236,10 @@ def preview_graph():
 	make_graph()
 	os.remove('../temp_resources/temp.png')	
 	bounds_button['state'] = 'normal'
+	curve_smoothing_slider['state'] = 'normal'
+	export_button['state'] = 'normal'
+	horizontal_shift_slider['state'] = 'normal'
+	vertical_shift_slider['state'] = 'normal'
 
 #previews graph
 def make_graph(bounds = False):
@@ -322,8 +320,6 @@ def make_graph(bounds = False):
 		
 		x1 = [i - x1_min for i in x1]
 		x2 = [i - x2_min for i in x2]
-<<<<<<< HEAD
-=======
 	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
 	highest_intensity = max(x1[np.argmax(np.array(x1))], x2[np.argmax(np.array(x2))])
@@ -334,7 +330,6 @@ def make_graph(bounds = False):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
 	#print("scaled intensity: {}".format(x1))
->>>>>>> 986b8992a05c762104a19c7387f38698095ddb53
 
 	#new auto peak detector for initial horizontal adjustment
 	x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
@@ -669,11 +664,7 @@ def init():
 	baseline_choice = tkinter.IntVar()
 	baseline_choice.set(1)
 	modes = [("Midpoint", 101), ("Lowest Value", 102)]
-<<<<<<< HEAD
-	Label(left_frame, text="Baseline:", justify="left", padx=20).pack()
-=======
 	Label(left_frame, text="Baseline from:", justify="left", padx=20).pack()
->>>>>>> 986b8992a05c762104a19c7387f38698095ddb53
 	i=0
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_choice, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
