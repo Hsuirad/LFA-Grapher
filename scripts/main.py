@@ -444,7 +444,7 @@ def make_ordinal(num):
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global curve_smoothing_slider, h_shift_slider, v_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload
+	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
