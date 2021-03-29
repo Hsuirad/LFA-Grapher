@@ -21,6 +21,8 @@ import random
 root = tkinter.Tk()
 root.title("Intensity Grapher")
 smooth_val = 0
+h_shift_val = 0
+v_shift_val = 0
 
 #ratio is 3:2
 plot_disp_size = (int(370*1.5), 370)
@@ -179,6 +181,16 @@ def choose_peak_bounds():
 
 	return bounds
 
+def update_h_shift(val):
+	global h_shift_val
+	h_shift_val = val
+	print("Horizontal Shift: " + h_shift_val)
+
+def update_v_shift(val):
+	global v_shift_val
+	v_shift_val = val
+	print("Vertical Shift: " + v_shift_val)
+
 #previews graph
 def make_graph():
 
@@ -275,17 +287,18 @@ def make_graph():
 	print("peak 1 index: {}".format(x1_peak))
 	print("peak 2 index: {}".format(x2_peak))
 
-	x1_final = x1
-	x2_final = x2
+	t1 = np.arange(len(x1))
+	t2 = np.arange(len(x2))
 
-	if x1_peak > x2_peak:
-		x1_final = x1[x1_peak-x2_peak:]
+	if x1_peak < x2_peak:
+		t1 = [i+x2_peak-x1_peak for i in t1]
 	
-	if x2_peak > x1_peak:
-		x2_final = x2[x2_peak-x1_peak:]
+	if x2_peak < x1_peak:
+		t2 = [i+x1_peak-x2_peak for i in t2]
 
-	#h and v shift 
-
+	#manual h and v shift 
+	t1 = [i+int(h_shift_val) for i in t1]
+	x1 = [i+int(v_shift_val) for i in x1]
 
 	'''
 	plt.clf()
@@ -334,8 +347,8 @@ def make_graph():
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 	ax = plt.subplot(111)
 
-	plt.plot(x1_final)
-	plt.plot(x2_final)
+	plt.plot(t1, x1)
+	plt.plot(t2, x2)
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -385,16 +398,6 @@ def save_graph():
 		plt.savefig(f, bbox_inches='tight')
 	elif f is None:
 		return
-
-def update_h_shift(val):
-	global h_shift_val
-	h_shift_val = val
-	print("Horizontal Shift: " + h_shift_val)
-
-def update_v_shift(val):
-	global v_shift_val
-	v_shift_val = val
-	print("Vertical Shift: " + v_shift_val)
 
 
 #makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
