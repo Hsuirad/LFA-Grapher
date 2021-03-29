@@ -152,6 +152,8 @@ def update_smooth(val):
 	global smooth_val
 	smooth_val = val
 	print("Smooth: " + smooth_val)
+	make_graph()
+	os.remove('../resources/temp.png')
 
 #curve smoothing
 def smooth(interval, window_size):
@@ -190,6 +192,10 @@ def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
 	print("Vertical Shift: " + v_shift_val)
+
+def preview_graph():
+	make_graph()
+	os.remove('../resources/temp.png')
 
 #previews graph
 def make_graph():
@@ -388,8 +394,6 @@ def make_graph():
 	im = ImageTk.PhotoImage(Image.open('../resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
-	os.remove('../resources/temp.png')
-
 #saves graph
 #NEEDS TO ALSO EXPORT EXCEL DATA
 def save_graph():
@@ -474,7 +478,7 @@ def init():
 	bounds_button.pack(side="left", padx=(15,10), pady=(30,10))
 	bounds_button["state"] = "disable"
 
-	preview_button = Button(left_frame, text="Preview", command=make_graph)
+	preview_button = Button(left_frame, text="Preview", command=preview_graph)
 	preview_button.pack(side="left", padx=(10,10), pady=(30,10))
 	preview_button["state"] = "disable"
 
@@ -497,17 +501,21 @@ def init():
 	v_shift.trace("w", lambda *args:character_limit(v_shift))
 	'''
 
-	Label(sub_middle_frame, text="Horizontal Shift", justify="left", padx=0).pack()
+	Label(sub_middle_frame, text="Horiz. Shift").grid(column=0, row=1, pady=(0,0))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_h_shift)
-	horizontal_shift_slider.pack(padx=20, pady=0)
+	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
+	horizontal_shift_slider['state'] = 'disable'
 
-	Label(sub_middle_frame, text="Vertical Shift", justify="right", padx=0).pack()
-	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_v_shift)
-	horizontal_shift_slider.pack(padx=20, pady=0)
+	Label(sub_middle_frame, text="Vert. Shift").grid(column=1, row=1, pady=(0,0))
+	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_v_shift)
+	vertical_shift_slider.grid(column=1, row=0)
+	vertical_shift_slider['state'] = 'disable'
+
+	#vertical_shift_slider['length'] = 300
 
 	#graph on right
 	width, height = plot_disp_size
-	image_canvas = Canvas(middle_frame, width=width, height=height) #height = width too
+	image_canvas = Canvas(middle_frame, width=width, height=height)
 	image_canvas.pack(padx=(20,0), pady=(0,0))
 
 	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  #PIL solution
