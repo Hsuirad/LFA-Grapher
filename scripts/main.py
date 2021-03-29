@@ -69,11 +69,7 @@ def update_thresh(val):
 def thresh_and_crop():
 	try:
 		img_path = root.filename
-		leave = False
 	except:
-		leave = True
-
-	if leave:
 		return
 
 	#thresholding
@@ -142,8 +138,11 @@ def find_roi():
 	roi = cv2.selectROI(img_raw)
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
-	cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
-	cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
+	try:
+		cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
+		cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
+	except:
+		print("No ROI selected")
 
 	cv2.destroyAllWindows()
 
@@ -198,6 +197,8 @@ def update_v_shift(val):
 
 def preview_graph():
 	curve_smoothing_slider['state'] = 'normal'
+	horizontal_shift_slider['state'] = 'normal'
+	vertical_shift_slider['state'] = 'normal'
 	make_graph()
 	os.remove('../resources/temp.png')	
 	bounds_button['state'] = 'normal'
