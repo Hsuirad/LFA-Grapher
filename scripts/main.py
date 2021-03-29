@@ -179,7 +179,31 @@ def choose_peak_bounds():
 
 	global bounds
 
-	return bounds
+	print("Choose the left and right bounds of integration") 
+	x = plt.ginput(2)
+
+	left = round(float(str(x[0]).split(', ')[0][1:]))
+	right = round(float(str(x[1]).split(', ')[0][1:]))
+
+	bounds = [left, right]
+
+	plt.close()
+
+	print("Bounds: {}".format(bounds))
+
+	#make_graph()
+	#os.remove('../resources/temp.png')
+
+def peaks_and_areas(x1, x2):
+	
+	global peaks, areas
+
+	#find peak
+		
+	#find area
+
+
+	return peaks, areas
 
 def update_h_shift(val):
 	global h_shift_val
@@ -196,11 +220,9 @@ def update_v_shift(val):
 	os.remove('../resources/temp.png')
 
 def preview_graph():
-	curve_smoothing_slider['state'] = 'normal'
-	horizontal_shift_slider['state'] = 'normal'
-	vertical_shift_slider['state'] = 'normal'
 	make_graph()
 	os.remove('../resources/temp.png')	
+
 	bounds_button['state'] = 'normal'
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
@@ -242,13 +264,13 @@ def make_graph():
 	#smoothing
 	if int(smooth_val) > 0:
 		print(smooth_val)
-		print("init x1 {}".format(x1))
+		#print("init x1 {}".format(x1))
 		print(float(len(x1)/3 * (float(float(smooth_val)/100.000))))
 
 		x1 = smooth(x1, int(len(x1)/3 * (float(float(smooth_val))/100.000)))
 		x2 = smooth(x2, int(len(x2)/3 * (float(float(smooth_val))/100.000)))
 
-		print("smoothed x1 {}".format(x1))
+		#print("smoothed x1 {}".format(x1))
 		
 		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
@@ -263,7 +285,7 @@ def make_graph():
 
 		minimum = min(x1[np.argmin(np.array(x1))], x2[np.argmin(np.array(x2))])
 
-		print(minimum, np.argmin(np.array(x1)))
+		#print(minimum, np.argmin(np.array(x1)))
 
 		x1 = [i - minimum for i in x1]
 		x2 = [i - minimum for i in x2]	
@@ -283,7 +305,7 @@ def make_graph():
 	for i in range(len(x2)):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
-	print("scaled intensity: {}".format(x1))
+	#print("scaled intensity: {}".format(x1))
 
 	#new auto peak detector for initial horizontal adjustment
 	x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
@@ -325,6 +347,12 @@ def make_graph():
 	print(clicked)
 	right_peak = [float(str(clicked).split(', ')[0]), float(str(clicked).split(', ')[1])]
 	'''
+
+	#does the shading between bounds and calls function to find the area and peak
+	#shading thing
+	
+	#peaks, areas = peaks_and_areas(x1, x2)
+	#annotate the peaks and area
 
 	'''
 	TESTPLOT AREA MODEL
