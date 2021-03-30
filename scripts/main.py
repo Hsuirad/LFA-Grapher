@@ -365,6 +365,8 @@ def make_graph(bounds = False):
 		points_x2 = [left_point, right_point]
 		plt.clf()
 
+		points_right_peak = [min(points_x2[0], points_x1[0]), max(points_x2[1], points_x1[1])]
+
 		if peaks_num_grabbed == 102:
 			plt.clf()
 			plt.title("LINE 1: SELECT LEFT AND RIGHT OF THE LEFTMOST PEAK (bounds selection)")
@@ -387,6 +389,8 @@ def make_graph(bounds = False):
 			right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-right_peak[1]))
 			points_x2 = points_x2 + [left_point, right_point]
 			plt.clf()
+
+			points_left_peak = [min(points_x2[2], points_x1[2]), max(points_x2[3], points_x1[3])]
 
 
 	#matplot plotting
@@ -422,17 +426,18 @@ def make_graph(bounds = False):
 	figure.set_size_inches(15, 10)
 
 	if bounds == True:
-		plt.fill_between(t1, x1, 0, where = (t1 > t1[points_x1[0]]) & (t1 <= t1[points_x1[1]]), color = (1, 0, 0, 0.2))
-		plt.fill_between(t2, x2, 0, where = (t2 > t2[points_x2[0]]) & (t2 <= t2[points_x2[1]]), color = (0, 0, 1, 0.2))
+		plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_right_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_right_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
+		plt.fill_between(t2, x2, 0, where = (t2 > t2[points_right_peak[0]]) & (t2 <= t2[points_right_peak[1]]), color = (0, 0, 1, 0.2))
 
-		vals.extend([simps(x1[points_x1[0]:points_x1[1]], t1[points_x1[0]:points_x1[1]], dx=0.01)])
-		vals.extend([simps(x2[points_x2[0]:points_x2[1]], t2[points_x2[0]:points_x2[1]], dx=0.01)])
+		vals.extend([simps(x1[points_right_peak[0]:points_right_peak[1]], t1[points_right_peak[0]:points_right_peak[1]], dx=0.01)])
+		vals.extend([simps(x2[points_right_peak[0]:points_right_peak[1]], t2[points_right_peak[0]:points_right_peak[1]], dx=0.01)])
 
 		if peaks_num_grabbed == 102:
-			plt.fill_between(t1, x1, 0, where = (t1 > t1[points_x1[2]]) & (t1 <= t1[points_x1[3]]), color = (1, 0, 0, 0.2))
-			plt.fill_between(t2, x2, 0, where = (t2 > t2[points_x2[2]]) & (t2 <= t2[points_x2[3]]), color = (0, 0, 1, 0.2))
-			vals.extend([simps(x1[points_x1[2]:points_x1[3]], t1[points_x1[2]:points_x1[3]], dx=0.01)])
-			vals.extend([simps(x2[points_x2[2]:points_x2[3]], t2[points_x2[2]:points_x2[3]], dx=0.01)])
+			plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_left_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_left_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
+			plt.fill_between(t2, x2, 0, where = (t2 > t2[points_left_peak[0]]) & (t2 <= t2[points_left_peak[1]]), color = (0, 0, 1, 0.2))
+			print(points_left_peak, points_right_peak, points_x1, points_x2)
+			vals.extend([simps(x1[points_left_peak[0]:points_left_peak[1]], t1[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
+			vals.extend([simps(x2[points_left_peak[0]:points_left_peak[1]], t2[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
 
 
 	global im
@@ -555,7 +560,7 @@ def init():
 	peak_num_choice = tkinter.IntVar()
 	peak_num_choice.set(1)
 	modes = [("One Peak", 101), ("Two Peaks", 102)]
-	Label(left_frame, text="Number of bands present on strip:", justify="left", padx=20).pack(pady=(20, 0))
+	Label(left_frame, text="How many peaks to compare:", justify="left", padx=20).pack(pady=(20, 0))
 	i=0
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_peaks, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
