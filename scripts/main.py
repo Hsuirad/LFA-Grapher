@@ -66,6 +66,7 @@ def thresh_and_crop():
 	try:
 		img_path = root.filename
 	except:
+		print("Root Filename not compatible with image path")
 		return
 
 	#thresholding
@@ -116,18 +117,23 @@ def find_roi():
 		global img_path
 		img_path = '../temp_resources/cropped/' + os.path.split(root.filename)[1]
 	except:
+		print("Image path not defined")
 		return
 	
+	if os.path.exists(img_path) == False:
+		print("Must threshold image first")
+		return
+
 	img_raw = cv2.imread(img_path)
 	
 	#select ROI function 1 (top strip)
 	roi = cv2.selectROI(img_raw)
 	roi_cropped1 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-	
+
 	#select ROI function 2 (bottom strip)
 	roi = cv2.selectROI(img_raw)
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
-	
+
 	try:
 		cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
 		cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
@@ -290,9 +296,10 @@ def make_graph(bounds = False):
 		vertical_shift_slider['from'] = highest_intensity/2 * -1
 		vertical_shift_slider['to'] = highest_intensity/2
 
+	#NO THIS IS THE FISHY PART TOO
 	if bounds == True:
 		plt.clf()
-		plt.title("Line 1: Select LEFT and RIGHT BOUNDS of the CONTROL PEAK (right)")
+		plt.title("Top Strip (1): Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t1, x1)
 		clicked = plt.ginput(2)
 		plt.close()
@@ -302,8 +309,10 @@ def make_graph(bounds = False):
 		points_x1 = [left_point, right_point]
 		plt.clf()
 
+		print('x1 {} {} {}'.format(clicked, left_peak, points_x1))
+
 		plt.clf()
-		plt.title("Line 2: Select LEFT and RIGHT BOUNDS of the CONTROL PEAK (right)")
+		plt.title("Bottom Strip (2): Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t2, x2)
 		clicked = plt.ginput(2)
 		plt.close()
@@ -313,11 +322,15 @@ def make_graph(bounds = False):
 		points_x2 = [left_point, right_point]
 		plt.clf()
 
+		print('x2 {} {} {}'.format(clicked, left_peak, points_x2))
+
 		points_right_peak = [min(points_x2[0], points_x1[0]), max(points_x2[1], points_x1[1])]
+
+		print('points control peak {}'.format(points_right_peak))
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
-			plt.title("Line 1: Select LEFT and RIGHT BOUNDS of the TEST PEAK (left)")
+			plt.title("Top Strip (1): Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t1, x1)
 			clicked = plt.ginput(2)
 			plt.close()
@@ -328,7 +341,7 @@ def make_graph(bounds = False):
 			plt.clf()
 
 			plt.clf()
-			plt.title("Line 2: Select LEFT and RIGHT BOUNDS of the TEST PEAK (left)")
+			plt.title("Bottom Strip (1): Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t2, x2)
 			clicked = plt.ginput(2)
 			plt.close()
@@ -354,7 +367,6 @@ def make_graph(bounds = False):
 	ax.xaxis.set_ticks_position('bottom')
 	ax.xaxis.set_minor_locator(AutoMinorLocator(2))
 	ax.yaxis.set_minor_locator(AutoMinorLocator(2))
-	ax.legend()
 	plt.setp(ax.spines.values(), linewidth=1.5)
 	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
 	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
@@ -402,10 +414,10 @@ def save_graph():
 		# Add a bold format to use to highlight cells.
 		bold = workbook.add_format({'bold': True})
 		#vals = [t1, x1, t2, x2, area_peak_left_x1, area_padfax2, prekarightx1, same x2]
-		worksheet.write('A1', 'Top Line X-values', bold)
-		worksheet.write('B1', 'Top Line Y-values', bold)
-		worksheet.write('C1', 'Bottom Line X-values', bold)
-		worksheet.write('D1', 'Bottom Line Y-Values', bold)
+		worksheet.write('A1', 'Top Strip X-values', bold)
+		worksheet.write('B1', 'Top Strip Y-values', bold)
+		worksheet.write('C1', 'Bottom Strip X-values', bold)
+		worksheet.write('D1', 'Bottom Strip Y-Values', bold)
 		worksheet.write('E1', 'Area of rightmost peak (Top line)', bold)
 		worksheet.write('F1', 'Area of rightmost peak (Bottom line)', bold)
 		worksheet.write('G1', 'Area of leftmost peak (Top line)', bold)
