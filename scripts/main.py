@@ -435,7 +435,6 @@ def make_graph(bounds = False):
 		if peaks_num_grabbed == 102:
 			plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_left_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_left_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
 			plt.fill_between(t2, x2, 0, where = (t2 > t2[points_left_peak[0]]) & (t2 <= t2[points_left_peak[1]]), color = (0, 0, 1, 0.2))
-			print(points_left_peak, points_right_peak, points_x1, points_x2)
 			vals.extend([simps(x1[points_left_peak[0]:points_left_peak[1]], t1[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
 			vals.extend([simps(x2[points_left_peak[0]:points_left_peak[1]], t2[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
 
