@@ -129,16 +129,10 @@ def find_roi():
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 	
 	try:
-		cv2.imwrite("../resources/topstrip.jpeg", roi_cropped1)
-		cv2.imwrite('../resources/bottomstrip.jpeg', roi_cropped2)
+		cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
+		cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
 	except:
 		print("No ROI selected")
-
-	cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
-	cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
-
-	cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
-	cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
 
 	cv2.destroyAllWindows()
 
@@ -155,18 +149,20 @@ def smooth(interval, window_size):
 	return np.convolve(interval, window, mode='valid')
 
 #updates after baseline selection
-def update_choice():
+def update_baseline():
 	preview_button["state"] = "normal"
 
 	global baseline_grabbed
 	baseline_grabbed = baseline_choice.get()
 
+#updates after selecting number of peak bounds
 def update_peaks():
+	bounds_button['state'] = 'normal'
+
 	global peaks_num_grabbed
 	peaks_num_grabbed = peak_num_choice.get()
 
 #choosing peak bounds for integration step 
-#NEEDS TO ADD AREA and do all the calculation here so it can iterate regardless of the curve bc some only have one peak
 def choose_peak_bounds():
 	export_button["state"] = "normal"
 
@@ -175,30 +171,6 @@ def choose_peak_bounds():
 	make_graph(bounds = True)
 
 	return bounds
-	print("Choose the left and right bounds of integration") 
-	x = plt.ginput(2)
-
-	left = round(float(str(x[0]).split(', ')[0][1:]))
-	right = round(float(str(x[1]).split(', ')[0][1:]))
-
-	bounds = [left, right]
-
-	plt.close()
-
-	#make_graph()
-	#os.remove('../resources/temp.png')
-
-def peaks_and_areas(x1, x2):
-	
-	global peaks, areas
-
-	#find peak
-	#np.amax(np.array(x1))
-	#np.amax(np.array(x2))
-	#find area
-
-
-	return peaks, areas
 
 def update_h_shift(val):
 	global h_shift_val
@@ -215,9 +187,8 @@ def update_v_shift(val):
 def preview_graph():
 	make_graph()
 	os.remove('../temp_resources/temp.png')	
-	bounds_button['state'] = 'normal'
-	curve_smoothing_slider['state'] = 'normal'
 	export_button['state'] = 'normal'
+	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
 
@@ -235,7 +206,7 @@ def make_graph(bounds = False):
 	#in case matplotlib crashes
 	plt.clf()
 		
-	top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L") #L for alan (sorry)
+	top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L")
 	bottom_line = Image.open('../temp_resources/bottomstrip.jpeg').convert("L")
 
 	#convert to numpy array
@@ -261,15 +232,6 @@ def make_graph(bounds = False):
 		
 		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
-	
-	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
-	highest_intensity = max(list(np.append(x1, x2)))
-
-	for i in range(len(x1)):
-		x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
-	for i in range(len(x2)):
-		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
-
 
 	#baseline adjustment
 	if baseline_grabbed == 101: #midpoint
@@ -279,20 +241,14 @@ def make_graph(bounds = False):
 		x1 = [i - x1_mid for i in x1]
 		x2 = [i - x2_mid for i in x2]
 
-		minimum = min(x1[np.argmin(np.array(x1))], x2[np.argmin(np.array(x2))])
+	#low val (shifts all to y=0 for standard axis)
+	low_val = min(list(np.append(x1, x2)))
 
-		x1 = [i - minimum for i in x1]
-		x2 = [i - minimum for i in x2]	
-	
-	if baseline_grabbed == 102: #lowest value
-		x1_min = x1[np.argmin(np.array(x1))]
-		x2_min = x2[np.argmin(np.array(x2))]
-		
-		x1 = [i - x1_min for i in x1]
-		x2 = [i - x2_min for i in x2]
+	x1 = [i-low_val for i in x1]
+	x2 = [i-low_val for i in x2]
 	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
-	highest_intensity = max(x1[np.argmax(np.array(x1))], x2[np.argmax(np.array(x2))])
+	highest_intensity = max(list(np.append(x1, x2)))
 
 	for i in range(len(x1)):
 		x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
@@ -324,16 +280,8 @@ def make_graph(bounds = False):
 		t2 = [i+x1_peak-x2_peak for i in t2]
 
 	#manual h and v shift 
-
 	t1 = [i+int(h_shift_val)*0.75 for i in t1]
 	x1 = [i+int(v_shift_val)*0.75 for i in x1]
-
-	#min of the concatenated y lists
-	low_val = min(list(np.append(x1, x2)))
-
-
-	x1 = [x-low_val for x in x1]
-	x2 = [x-low_val for x in x2]
 
 	if h_shift_val == 0:
 		horizontal_shift_slider['from'] = t1[-1]/2 * -1
@@ -344,7 +292,7 @@ def make_graph(bounds = False):
 
 	if bounds == True:
 		plt.clf()
-		plt.title("LINE 1: SELECT LEFT AND RIGHT OF THE RIGHTMOST PEAK (bounds selection)")
+		plt.title("Line 1: Select LEFT and RIGHT BOUNDS of the CONTROL PEAK (right)")
 		plt.plot(t1, x1)
 		clicked = plt.ginput(2)
 		plt.close()
@@ -355,7 +303,7 @@ def make_graph(bounds = False):
 		plt.clf()
 
 		plt.clf()
-		plt.title("LINE 2: SELECT LEFT AND RIGHT OF THE RIGHTMOST PEAK (bounds selection)")
+		plt.title("Line 2: Select LEFT and RIGHT BOUNDS of the CONTROL PEAK (right)")
 		plt.plot(t2, x2)
 		clicked = plt.ginput(2)
 		plt.close()
@@ -369,7 +317,7 @@ def make_graph(bounds = False):
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
-			plt.title("LINE 1: SELECT LEFT AND RIGHT OF THE LEFTMOST PEAK (bounds selection)")
+			plt.title("Line 1: Select LEFT and RIGHT BOUNDS of the TEST PEAK (left)")
 			plt.plot(t1, x1)
 			clicked = plt.ginput(2)
 			plt.close()
@@ -380,7 +328,7 @@ def make_graph(bounds = False):
 			plt.clf()
 
 			plt.clf()
-			plt.title("LINE 2: SELECT LEFT AND RIGHT OF THE LEFTMOST PEAK (bounds selection)")
+			plt.title("Line 2: Select LEFT and RIGHT BOUNDS of the TEST PEAK (left)")
 			plt.plot(t2, x2)
 			clicked = plt.ginput(2)
 			plt.close()
@@ -397,8 +345,8 @@ def make_graph(bounds = False):
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 	ax = plt.subplot(111)
 
-	plt.plot(t1, x1, linewidth=3)
-	plt.plot(t2, x2, linewidth=3)
+	plt.plot(t1, x1, linewidth=2)
+	plt.plot(t2, x2, linewidth=2)
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -425,6 +373,7 @@ def make_graph(bounds = False):
 	figure = plt.gcf()
 	figure.set_size_inches(15, 10)
 
+	#THERES SOMETHING UP WITH THIS DADDYIUSH
 	if bounds == True:
 		plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_right_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_right_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
 		plt.fill_between(t2, x2, 0, where = (t2 > t2[points_right_peak[0]]) & (t2 <= t2[points_right_peak[1]]), color = (0, 0, 1, 0.2))
@@ -438,14 +387,12 @@ def make_graph(bounds = False):
 			vals.extend([simps(x1[points_left_peak[0]:points_left_peak[1]], t1[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
 			vals.extend([simps(x2[points_left_peak[0]:points_left_peak[1]], t2[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
 
-
 	global im
 	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('../temp_resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
 #saves graph
-#NEEDS TO ALSO EXPORT EXCEL DATA
 def save_graph():
 	f = filedialog.asksaveasfilename(defaultextension='.xlsx')
 	if f:
@@ -492,7 +439,6 @@ def save_graph():
 		# Insert an image.
 		worksheet.insert_image('E4', f.split('.xlsx')[0] + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
 		worksheet.insert_image('E23', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
-
 
 		workbook.close()
 
@@ -553,7 +499,7 @@ def init():
 	Label(left_frame, text="Baseline from:", justify="left", padx=20).pack()
 	i=0
 	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_choice, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
+		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_baseline, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
 		i+=1
 
 	peak_num_choice = tkinter.IntVar()
@@ -588,6 +534,7 @@ def init():
 	vertical_shift_slider.grid(column=1, row=0)
 	vertical_shift_slider['state'] = 'disable'
 
+	#right side graph
 	width, height = plot_disp_size
 	image_canvas = Canvas(middle_frame, width=width, height=height)
 	image_canvas.pack(padx=(20,0), pady=(0,0))
