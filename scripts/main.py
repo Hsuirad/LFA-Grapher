@@ -1,5 +1,3 @@
-#this needs some cleaning
-# import statsmodels.api as sm
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
 import matplotlib.pyplot as plt
@@ -11,7 +9,6 @@ from scipy.signal import find_peaks
 import math
 from tkinter import messagebox
 from matplotlib.ticker import (AutoMinorLocator)
-# from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 from tkinter import Radiobutton, Frame, Button, filedialog, Scale, Canvas, PhotoImage, Label
 from shutil import rmtree
 import xlsxwriter
