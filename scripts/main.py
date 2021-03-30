@@ -455,7 +455,7 @@ def save_graph():
 		# Add a bold format to use to highlight cells.
 		bold = workbook.add_format({'bold': True})
 		#vals = [t1, x1, t2, x2, area_peak_left_x1, area_padfax2, prekarightx1, same x2]
-		worksheet.write('A1', 'Top Line Y-values', bold)
+		worksheet.write('A1', 'Top Line X-values', bold)
 		worksheet.write('B1', 'Top Line Y-values', bold)
 		worksheet.write('C1', 'Bottom Line X-values', bold)
 		worksheet.write('D1', 'Bottom Line Y-Values', bold)
