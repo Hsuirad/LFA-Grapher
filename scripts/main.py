@@ -1,21 +1,18 @@
 #this needs some cleaning
-import statsmodels.api as sm
+# import statsmodels.api as sm
 import numpy as np
 from PIL import Image, ImageTk, ImageOps
 import matplotlib.pyplot as plt
 import cv2
-import time
 from scipy.integrate import simps
 import os
 import tkinter
 from scipy.signal import find_peaks
-import csv
-import tkinter.ttk as ttk
 import math
+from tkinter import messagebox
 from matplotlib.ticker import (AutoMinorLocator)
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-from tkinter import Radiobutton, Entry, Frame, Button, StringVar, filedialog, Scale, Canvas, PhotoImage, Label
-import random
+# from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from tkinter import Radiobutton, Frame, Button, filedialog, Scale, Canvas, PhotoImage, Label
 from shutil import rmtree
 import xlsxwriter
 
@@ -29,7 +26,7 @@ v_shift_val = 0
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
 
-text_entry_arr = []
+# text_entry_arr = []
 text_box_arr = []
 
 bounds = []
@@ -43,7 +40,7 @@ if 'cropped' not in os.listdir('../temp_resources'):
 
 #for exiting the program
 def on_closing():
-	if tkinter.messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
+	if messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
 		print("Exited")
 		root.quit()
 		root.destroy()
@@ -66,7 +63,6 @@ def update_thresh(val):
 	global thresh_val
 	thresh_val = val
 	thresh_and_crop()
-	print("Thresh: " + thresh_val)
 
 #image processing
 def thresh_and_crop():
@@ -84,11 +80,6 @@ def thresh_and_crop():
 	#cropping
 	cnt, hierarchy = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
 	cnt_sort = sorted(cnt, key=cv2.contourArea)
-
-	'''
-	KEEP might use pointpolytest later
-	print(cnt_sort, cv2.pointPolygonTest(cnt_sort[-1], (0, 0), False))
-	'''
 
 	cv2.drawContours(img_thresh, cnt_sort[:-2], -1, 0, -1)
 	cnt_sort = cnt_sort[-2:]
@@ -111,8 +102,6 @@ def thresh_and_crop():
 					ymin = f[z][1]
 				if f[z][1] > ymax:
 					ymax = f[z][1]
-	
-	print((ymax, ymin, xmin, xmax))
 	
 	img_crop = img_thresh[ymin:ymax, xmin:xmax]
 
@@ -160,14 +149,12 @@ def find_roi():
 def update_smooth(val):
 	global smooth_val
 	smooth_val = val
-	print("Smooth: " + smooth_val)
 	make_graph()
 	os.remove('../temp_resources/temp.png')
 
 #curve smoothing
 def smooth(interval, window_size):
 	window = np.ones(int(window_size))/float(window_size)
-	print("window {}".format(window))
 	return np.convolve(interval, window, mode='valid')
 
 #updates after baseline selection
@@ -201,8 +188,6 @@ def choose_peak_bounds():
 
 	plt.close()
 
-	print("Bounds: {}".format(bounds))
-
 	#make_graph()
 	#os.remove('../resources/temp.png')
 
@@ -221,14 +206,12 @@ def peaks_and_areas(x1, x2):
 def update_h_shift(val):
 	global h_shift_val
 	h_shift_val = val
-	print("Horizontal Shift: " + h_shift_val)
 	make_graph()
 	os.remove('../temp_resources/temp.png')
 
 def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
-	print("Vertical Shift: " + v_shift_val)
 	make_graph()
 	os.remove('../temp_resources/temp.png')
 
@@ -276,14 +259,8 @@ def make_graph(bounds = False):
 
 	#smoothing
 	if int(smooth_val) > 0:
-		print(smooth_val)
-		#print("init x1 {}".format(x1))
-		print(float(len(x1)/3 * (float(float(smooth_val)/100.000))))
-
 		x1 = smooth(x1, int(len(x1)/3 * (float(float(smooth_val))/100.000)))
 		x2 = smooth(x2, int(len(x2)/3 * (float(float(smooth_val))/100.000)))
-
-		#print("smoothed x1 {}".format(x1))
 		
 		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
@@ -296,8 +273,6 @@ def make_graph(bounds = False):
 	for i in range(len(x2)):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
-	print("scaled intensity: {}".format(x1))
-
 
 	#baseline adjustment
 	if baseline_grabbed == 101: #midpoint
@@ -308,8 +283,6 @@ def make_graph(bounds = False):
 		x2 = [i - x2_mid for i in x2]
 
 		minimum = min(x1[np.argmin(np.array(x1))], x2[np.argmin(np.array(x2))])
-
-		#print(minimum, np.argmin(np.array(x1)))
 
 		x1 = [i - minimum for i in x1]
 		x2 = [i - minimum for i in x2]	
@@ -329,8 +302,6 @@ def make_graph(bounds = False):
 	for i in range(len(x2)):
 		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
-	#print("scaled intensity: {}".format(x1))
-
 	#new auto peak detector for initial horizontal adjustment
 	x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
 	x2_peaks, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)
@@ -338,18 +309,13 @@ def make_graph(bounds = False):
 	x1_peak = 0
 	x2_peak = 0
 
-	print(np.argmax(np.array([x1[i] for i in x1_peaks])))
 	for i in x1_peaks:
 		if x1[i] > x1[x1_peak]:
 			x1_peak = i
-	print((x1_peak))
 
 	for i in x2_peaks:
 		if x2[i] > x2[x2_peak]:
 			x2_peak = i
-
-	print("peak 1 index: {}".format(x1_peak))
-	print("peak 2 index: {}".format(x2_peak))
 
 	t1 = np.arange(len(x1))
 	t2 = np.arange(len(x2))
@@ -362,42 +328,9 @@ def make_graph(bounds = False):
 
 	#manual h and v shift 
 
-	t1 = [i+int(h_shift_val)/100*len(t1) for i in t1]
-	x1 = [i+int(v_shift_val)/100*len(x1) for i in x1]
+	t1 = [i+int(h_shift_val)*0.75 for i in t1]
+	x1 = [i+int(v_shift_val)*0.75 for i in x1]
 
-	t1 = [i+int(h_shift_val) for i in t1]
-	x1 = [i+int(v_shift_val) for i in x1]
-
-	'''
-	plt.clf()
-	plt.title("CLICK LEFT AND RIGHT OF THE RIGHTMOST PEAK (Bounds Selection)")
-	plt.plot(x)
-
-	clicked = plt.ginput(2)
-	print(clicked)
-	right_peak = [float(str(clicked).split(', ')[0]), float(str(clicked).split(', ')[1])]
-	'''
-
-	#does the shading between bounds and calls function to find the area and peak
-	#shading thing
-	
-	#peaks, areas = peaks_and_areas(x1, x2)
-	#annotate the peaks and area
-
-	'''
-	TESTPLOT AREA MODEL
-	t = np.arange(0, 10, 0.01) 
-	y = np.sin(t)+1
-	plt.plot(t, y) 
-	plt.title('matplotlib.pyplot.ginput() function Example', fontweight ="bold") 
-
-	print("After 2 clicks :") 
-	x = plt.ginput(2) 
-	print(x) 
-	
-	plt.clf()
-	'''
-	
 	#min of the concatenated y lists
 	low_val = min(list(np.append(x1, x2)))
 
@@ -406,11 +339,11 @@ def make_graph(bounds = False):
 	x2 = [x-low_val for x in x2]
 
 	if h_shift_val == 0:
-		horizontal_shift_slider['from'] = t1[-1] * -1
-		horizontal_shift_slider['to'] = t1[-1]
+		horizontal_shift_slider['from'] = t1[-1]/2 * -1
+		horizontal_shift_slider['to'] = t1[-1]/2
 	if v_shift_val == 0:
-		vertical_shift_slider['from'] = highest_intensity * -1
-		vertical_shift_slider['to'] = highest_intensity
+		vertical_shift_slider['from'] = highest_intensity/2 * -1
+		vertical_shift_slider['to'] = highest_intensity/2
 
 	if bounds == True:
 		plt.clf()
@@ -486,16 +419,6 @@ def make_graph(bounds = False):
 	vals.extend([t1, x1, t2, x2])
 
 	plt.legend(['Top Line', 'Bottom Line'], frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
-	
-	'''
-	PEAK ANNOTATION
-	for i in peaks_x:
-		plt.annotate('Peak: {}'.format(x1[i]), xy = (i, x1[i]))
-	for i in peaks_x2:
-		plt.annotate('Peak: {}'.format(x2[i]), xy = (i, x2[i]))
-
-	print(peaks_x, peaks_x2)
-	'''
 
 	#resizing
 	figure = plt.gcf()
@@ -525,8 +448,6 @@ def make_graph(bounds = False):
 def save_graph():
 	f = filedialog.asksaveasfilename(defaultextension='.xlsx')
 	if f:
-		print('\n\n\n\n\n\n\n\n {} \n\n\n\n',format(vals))
-		print(f)
 		plt.savefig(f.split('.xlsx')[0] + '.png', bbox_inches='tight')
 		workbook = xlsxwriter.Workbook(f)
 		worksheet = workbook.add_worksheet()
@@ -577,29 +498,6 @@ def save_graph():
 	elif f is None:
 		return
 
-'''
-import numpy as np
-import matplotlib.pyplot as plt
-import io
-
-x=np.linspace(-10,10,100)
-y=x**2
-
-fig,ax=plt.subplots()
-ax.plot(x,y)
-
-workbook = xlsxwriter.Workbook('test chart.xlsx')
-wks1=workbook.add_worksheet('Test chart')
-wks1.write(0,0,'test')
-
-imgdata=io.BytesIO()
-fig.savefig(imgdata, format='png')
-wks1.insert_image(2,2, '', {'image_data': imgdata})
-
-workbook.close()
-'''
-
-
 #makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
 def character_limit(p):
 	if len(p.get()) > 8 or is_number(p.get()) == False:
@@ -614,19 +512,6 @@ def is_number(n):
 		if n == "-":
 			return True
 		return False
-
-'''
-MIGHT USE LATER??
-def make_ordinal(num):
-	if num > 3:
-		return str(num)+"th"
-	elif num == 3:
-		return "3rd"
-	elif num == 2:
-		return "2nd"
-	else:
-		return "1st"
-'''
 
 #initializes tkinter GUI
 def init():
@@ -693,12 +578,12 @@ def init():
 	export_button["state"] = "disable"
 
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, pady=(0,20))
-	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_h_shift)
+	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-50.0, to=50.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
 
 	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1, pady=(0,0))
-	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=200, from_=-50.0, to=50.0, command=update_v_shift)
+	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-50.0, to=50.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
 	vertical_shift_slider['state'] = 'disable'
 
