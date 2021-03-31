@@ -303,26 +303,26 @@ def make_graph(bounds = False):
 		plt.plot(t1, x1)
 		clicked = plt.ginput(2)
 		plt.close()
-		left_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-left_peak[0]))
-		right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-left_peak[1]))
+		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
+		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
+		right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[1]))
 		points_x1 = [left_point, right_point]
 		plt.clf()
 
-		print('x1 {} {} {}'.format(clicked, left_peak, points_x1))
+		print('x1 {} {} {}'.format(clicked, control_peak, points_x1))
 
 		plt.clf()
 		plt.title("Bottom Strip (2): Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t2, x2)
 		clicked = plt.ginput(2)
 		plt.close()
-		left_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-		left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-left_peak[0]))
-		right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-left_peak[1]))
+		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
+		left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-control_peak[0]))
+		right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-control_peak[1]))
 		points_x2 = [left_point, right_point]
 		plt.clf()
 
-		print('x2 {} {} {}'.format(clicked, left_peak, points_x2))
+		print('x2 {} {} {}'.format(clicked, control_peak, points_x2))
 
 		points_right_peak = [min(points_x2[0], points_x1[0]), max(points_x2[1], points_x1[1])]
 
@@ -334,9 +334,9 @@ def make_graph(bounds = False):
 			plt.plot(t1, x1)
 			clicked = plt.ginput(2)
 			plt.close()
-			right_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-right_peak[0]))
-			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-right_peak[1]))
+			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
+			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
+			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
 			points_x1 = points_x1 + [left_point, right_point]
 			plt.clf()
 
@@ -345,9 +345,9 @@ def make_graph(bounds = False):
 			plt.plot(t2, x2)
 			clicked = plt.ginput(2)
 			plt.close()
-			right_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-			left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-right_peak[0]))
-			right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-right_peak[1]))
+			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
+			left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-test_peak[0]))
+			right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-test_peak[1]))
 			points_x2 = points_x2 + [left_point, right_point]
 			plt.clf()
 
