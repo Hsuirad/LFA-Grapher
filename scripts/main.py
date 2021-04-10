@@ -440,7 +440,7 @@ def save_graph():
 			worksheet.write('C'+str(i+2), str(vals[2][i]))
 			worksheet.write('D'+str(i+2), str(vals[3][i]))
 
-		if len(vals) == 6:
+		if len(vals) >= 6:
 			worksheet.write('E2', str(vals[4]))
 			worksheet.write('F2', str(vals[5]))
 
