@@ -299,59 +299,33 @@ def make_graph(bounds = False):
 	#NO THIS IS THE FISHY PART TOO
 	if bounds == True:
 		plt.clf()
-		plt.title("Top Strip (1): Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
+		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t1, x1)
+		plt.plot(t2, x2)
 		clicked = plt.ginput(2)
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
 		right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[1]))
-		points_x1 = [left_point, right_point]
+		points_right_peak = [left_point, right_point]
 		plt.clf()
 
-		print('x1 {} {} {}'.format(clicked, control_peak, points_x1))
-
-		plt.clf()
-		plt.title("Bottom Strip (2): Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
-		plt.plot(t2, x2)
-		clicked = plt.ginput(2)
-		plt.close()
-		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-		left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-control_peak[0]))
-		right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-control_peak[1]))
-		points_x2 = [left_point, right_point]
-		plt.clf()
-
-		print('x2 {} {} {}'.format(clicked, control_peak, points_x2))
-
-		points_right_peak = [min(points_x2[0], points_x1[0]), max(points_x2[1], points_x1[1])]
-
-		print('points control peak {}'.format(points_right_peak))
+		print('right {} {} {}'.format(clicked, control_peak, points_right_peak))
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
-			plt.title("Top Strip (1): Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
+			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t1, x1)
+			plt.plot(t2, x2)
 			clicked = plt.ginput(2)
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
 			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
-			points_x1 = points_x1 + [left_point, right_point]
+			points_left_peak = [left_point, right_point]
 			plt.clf()
-
-			plt.clf()
-			plt.title("Bottom Strip (1): Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
-			plt.plot(t2, x2)
-			clicked = plt.ginput(2)
-			plt.close()
-			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-			left_point = min(range(len(t2)), key=lambda i: abs(t2[i]-test_peak[0]))
-			right_point = min(range(len(t2)), key=lambda i: abs(t2[i]-test_peak[1]))
-			points_x2 = points_x2 + [left_point, right_point]
-			plt.clf()
-
-			points_left_peak = [min(points_x2[2], points_x1[2]), max(points_x2[3], points_x1[3])]
+			
+			print('left {} {} {}'.format(clicked, test_peak, points_left_peak))
 
 
 	#matplot plotting
