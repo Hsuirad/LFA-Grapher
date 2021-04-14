@@ -397,7 +397,7 @@ def make_graph(bounds = False):
 #saves graph
 #except needs more data to save 
 def save_graph():
-	f = filedialog.askdirectory(title='Choose Location to Save Data', initaldir='../')
+	f = filedialog.askdirectory(title='Choose Location to Save Data')
 	if f:
 		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
 		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
