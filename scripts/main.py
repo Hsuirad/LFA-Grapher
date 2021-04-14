@@ -7,6 +7,7 @@ import os
 import tkinter
 from scipy.signal import find_peaks
 import math
+import re
 from tkinter import messagebox
 from matplotlib.ticker import (AutoMinorLocator)
 from tkinter import Radiobutton, Frame, Button, filedialog, Scale, Canvas, PhotoImage, Label
@@ -310,7 +311,7 @@ def make_graph(bounds = False):
 		points_right_peak = [left_point, right_point]
 		plt.clf()
 
-		print('right {} {} {}'.format(clicked, control_peak, points_right_peak))
+		#print('right {} {} {}'.format(clicked, control_peak, points_right_peak))
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
@@ -325,8 +326,9 @@ def make_graph(bounds = False):
 			points_left_peak = [left_point, right_point]
 			plt.clf()
 			
-			print('left {} {} {}'.format(clicked, test_peak, points_left_peak))
-
+			#print('left {} {} {} \n\n\n{} \n\n\n'.format(clicked, test_peak, points_left_peak, t1, t1[points_left_peak[0]]))
+	
+	#add t[0] to the clicked value and then ur done
 
 	#matplot plotting
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
@@ -359,19 +361,19 @@ def make_graph(bounds = False):
 	figure = plt.gcf()
 	figure.set_size_inches(15, 10)
 
-	#THERES SOMETHING UP WITH THIS DADDYIUSH
+	#FIXED AH
 	if bounds == True:
-		plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_right_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_right_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
-		plt.fill_between(t2, x2, 0, where = (t2 > t2[points_right_peak[0]]) & (t2 <= t2[points_right_peak[1]]), color = (0, 0, 1, 0.2))
+		plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+		plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
 
-		vals.extend([simps(x1[points_right_peak[0]:points_right_peak[1]], t1[points_right_peak[0]:points_right_peak[1]], dx=0.01)])
-		vals.extend([simps(x2[points_right_peak[0]:points_right_peak[1]], t2[points_right_peak[0]:points_right_peak[1]], dx=0.01)])
+		vals.extend([simps(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])])), dx=0.01)])
+		vals.extend([simps(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])])), dx=0.01)])
 
 		if peaks_num_grabbed == 102:
-			plt.fill_between(t1, x1, 0, where = (t1 > (t1[points_left_peak[0]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])) & (t1 <= (t1[points_left_peak[1]]+t2[0]-t1[0] if t2[0] > t1[0] else t1[0]-t2[0])), color = (1, 0, 0, 0.2))
-			plt.fill_between(t2, x2, 0, where = (t2 > t2[points_left_peak[0]]) & (t2 <= t2[points_left_peak[1]]), color = (0, 0, 1, 0.2))
-			vals.extend([simps(x1[points_left_peak[0]:points_left_peak[1]], t1[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
-			vals.extend([simps(x2[points_left_peak[0]:points_left_peak[1]], t2[points_left_peak[0]:points_left_peak[1]], dx=0.01)])
+			plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0] + t1[0]) & (t1 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+			plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0] + t1[0]) & (t2 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+			vals.extend([simps(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])])), dx=0.01)])
+			vals.extend([simps(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])])), dx=0.01)])
 
 	global im
 	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
@@ -380,13 +382,14 @@ def make_graph(bounds = False):
 
 #saves graph
 def save_graph():
-	f = filedialog.asksaveasfilename(defaultextension='.xlsx')
+	f = filedialog.askdirectory(title='Choose Location to Save Data', initaldir='../')
 	if f:
-		plt.savefig(f.split('.xlsx')[0] + '.png', bbox_inches='tight')
-		workbook = xlsxwriter.Workbook(f)
+		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
+		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
 		worksheet = workbook.add_worksheet()
 		# Add a bold format to use to highlight cells.
 		bold = workbook.add_format({'bold': True})
+
 		#vals = [t1, x1, t2, x2, area_peak_left_x1, area_padfax2, prekarightx1, same x2]
 		worksheet.write('A1', 'Top Strip X-values', bold)
 		worksheet.write('B1', 'Top Strip Y-values', bold)
@@ -396,6 +399,9 @@ def save_graph():
 		worksheet.write('F1', 'Area of rightmost peak (Bottom line)', bold)
 		worksheet.write('G1', 'Area of leftmost peak (Top line)', bold)
 		worksheet.write('H1', 'Area of leftmost peak (Bottom line)', bold)
+
+		print(f)
+		print(os.path.split(root.filename)[1])
 
 		worksheet.set_column('A:A', 16.25) #these are widths of columns in cm of excel, just to make it more readable
 		worksheet.set_column('B:B', 16.25)
@@ -423,7 +429,7 @@ def save_graph():
 			worksheet.write('H2', str(vals[7]))
 
 		# Insert an image.
-		worksheet.insert_image('E4', f.split('.xlsx')[0] + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
+		worksheet.insert_image('E4', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
 		worksheet.insert_image('E23', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
 
 		workbook.close()
