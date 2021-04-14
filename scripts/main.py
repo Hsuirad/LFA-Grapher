@@ -357,7 +357,7 @@ def make_graph(bounds = False):
 	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
 	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
 
-	plt.ylabel('Intensity (a.u.)', **hfont)
+	plt.ylabel('Rel. Int. (% max)', **hfont)
 	plt.xlabel('Pixel distance', **hfont)
 
 	plt.setp(ax.get_yticklabels(), fontweight="bold", fontname="Arial")
@@ -365,7 +365,7 @@ def make_graph(bounds = False):
 
 	vals.extend([t1, x1, t2, x2])
 
-	plt.legend(['Top Line', 'Bottom Line'], frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
+	plt.legend(['Top Strip', 'Bottom Strip'], frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
 
 	#resizing
 	figure = plt.gcf()
@@ -414,14 +414,14 @@ def save_graph():
 		worksheet.write('F1', 'Top Strip Y-values (adjusted)', bold)
 		worksheet.write('G1', 'Bottom Strip X-values (adjusted)', bold)
 		worksheet.write('H1', 'Bottom Strip Y-Values (adjusted)', bold)
-		worksheet.write('I1', 'Area of control (right) peak - Top Line', bold)
-		worksheet.write('J1', 'Area of control (right) peak - Bottom Line', bold)
-		worksheet.write('K1', 'Area of test (left) peak - Top Line', bold)
-		worksheet.write('L1', 'Area of test (left) peak - Bottom Line', bold)
-		worksheet.write('I3', 'Max of control (right) peak - Top Line', bold)
-		worksheet.write('J3', 'Max of control (right) peak - Bottom Line', bold)
-		worksheet.write('K3', 'Max of test (left) peak - Top Line', bold)
-		worksheet.write('L3', 'Max of test (left) peak - Bottom Line', bold)
+		worksheet.write('I1', 'Area of control (right) peak - Top Strip', bold)
+		worksheet.write('J1', 'Area of control (right) peak - Bottom Strip', bold)
+		worksheet.write('K1', 'Area of test (left) peak - Top Strip', bold)
+		worksheet.write('L1', 'Area of test (left) peak - Bottom Strip', bold)
+		worksheet.write('I3', 'Max of control (right) peak - Top Strip', bold)
+		worksheet.write('J3', 'Max of control (right) peak - Bottom Strip', bold)
+		worksheet.write('K3', 'Max of test (left) peak - Top Strip', bold)
+		worksheet.write('L3', 'Max of test (left) peak - Bottom Strip', bold)
 
 		worksheet.set_column('A:A', 22) #these are widths of columns in cm of excel, just to make it more readable
 		worksheet.set_column('B:B', 22)
