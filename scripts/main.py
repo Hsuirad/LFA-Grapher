@@ -375,9 +375,11 @@ def make_graph(bounds = False):
 	if bounds == True:
 		try:
 			t1 = t1.tolist()
-			t2 = t2.tolist()
 		except:
-			print()
+			try:
+				t2 = t2.tolist()
+			except:
+				print("Shading..")
 		plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
 		plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
 
