@@ -313,7 +313,10 @@ def make_graph(bounds = False):
 		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t1, x1)
 		plt.plot(t2, x2)
-		clicked = plt.ginput(2)
+		try:
+			clicked = plt.ginput(2)
+		except:
+			print('Invalid endpoints')
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
@@ -328,7 +331,10 @@ def make_graph(bounds = False):
 			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t1, x1)
 			plt.plot(t2, x2)
-			clicked = plt.ginput(2)
+			try:
+				clicked = plt.ginput(2)
+			except:
+				print('Invalid endpoints')
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
@@ -380,21 +386,20 @@ def make_graph(bounds = False):
 				t2 = t2.tolist()
 			except:
 				print("Shading..")
+
 		plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
 		plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
 
 		vals.extend([simps(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])])), dx=0.01)])
 		vals.extend([simps(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])])), dx=0.01)])
-		vals.extend([max(x1[points_right_peak[0]:points_right_peak[1]])])
-		vals.extend([max(x2[points_right_peak[0]:points_right_peak[1]])])
+		vals.extend([max(x1[points_right_peak[0]:points_right_peak[1]]), max(x2[points_right_peak[0]:points_right_peak[1]]), points_right_peak[0], points_right_peak[1]])
 
 		if peaks_num_grabbed == 102:
 			plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0] + t1[0]) & (t1 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
 			plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0] + t1[0]) & (t2 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
 			vals.extend([simps(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])])), dx=0.01)])
 			vals.extend([simps(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])])), dx=0.01)])
-			vals.extend([max(x1[points_left_peak[0]:points_left_peak[1]])])
-			vals.extend([max(x2[points_left_peak[0]:points_left_peak[1]])])
+			vals.extend([max(x1[points_left_peak[0]:points_left_peak[1]]), max(x2[points_left_peak[0]:points_left_peak[1]]), points_left_peak[0], points_left_peak[1]])
 
 	global im
 	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
@@ -429,6 +434,10 @@ def save_graph():
 		worksheet.write('J3', 'Max of control (right) peak - Bottom Strip', bold)
 		worksheet.write('K3', 'Max of test (left) peak - Top Strip', bold)
 		worksheet.write('L3', 'Max of test (left) peak - Bottom Strip', bold)
+		worksheet.write('I5', 'Left bound of control (right) peak', bold)
+		worksheet.write('J5', 'Right bound of control (right) peak', bold)
+		worksheet.write('K5', 'Left bound of test (left) peak', bold)
+		worksheet.write('L5', 'Right bound of test (left) peak', bold)
 
 		worksheet.set_column('A:A', 22) #these are widths of columns in cm of excel, just to make it more readable
 		worksheet.set_column('B:B', 22)
@@ -464,16 +473,20 @@ def save_graph():
 			worksheet.write('J2', vals[5])
 			worksheet.write('I4', vals[6])
 			worksheet.write('J4', vals[7])
+			worksheet.write('I6', vals[8])
+			worksheet.write('J6', vals[9])
 
-		if len(vals) >= 10:
-			worksheet.write('K2', vals[8])
-			worksheet.write('L2', vals[9])
-			worksheet.write('K4', vals[10])
-			worksheet.write('L4', vals[11])
+		if len(vals) >= 12:
+			worksheet.write('K2', vals[10])
+			worksheet.write('L2', vals[11])
+			worksheet.write('K4', vals[12])
+			worksheet.write('L4', vals[13])
+			worksheet.write('K6', vals[14])
+			worksheet.write('L6', vals[15])
 
 		# Insert an image.
-		worksheet.insert_image('J6', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
-		worksheet.insert_image('J25', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
+		worksheet.insert_image('J8', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
+		worksheet.insert_image('J27', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
 
 		workbook.close()
 
