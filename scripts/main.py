@@ -313,10 +313,7 @@ def make_graph(bounds = False):
 		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t1, x1)
 		plt.plot(t2, x2)
-		try:
-			clicked = plt.ginput(2)
-		except:
-			print('Invalid endpoints')
+		clicked = plt.ginput(2)
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
@@ -331,10 +328,7 @@ def make_graph(bounds = False):
 			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t1, x1)
 			plt.plot(t2, x2)
-			try:
-				clicked = plt.ginput(2)
-			except:
-				print('Invalid endpoints')
+			clicked = plt.ginput(2)
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
