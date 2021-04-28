@@ -24,7 +24,7 @@ v_shift_val = 0
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
 
-# text_entry_arr = []
+#text_entry_arr = []
 text_box_arr = []
 
 bounds = []
@@ -54,7 +54,7 @@ def help_window():
 
 #opens dialog to select image
 def select_file():
-	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
+	root.filename = filedialog.askopenfilename(initialdir="./", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
 #threshold slider
 def update_thresh(val):
@@ -174,12 +174,8 @@ def update_peaks():
 
 #choosing peak bounds for integration step 
 def choose_peak_bounds():
-	export_button["state"] = "normal"
-
 	global bounds
-
 	make_graph(bounds = True)
-
 	return bounds
 
 def update_h_shift(val):
@@ -196,8 +192,10 @@ def update_v_shift(val):
 
 def preview_graph():
 	make_graph()
-	os.remove('../temp_resources/temp.png')	
-	export_button['state'] = 'normal'
+	try:
+		os.remove('../temp_resources/temp.png')
+	except:
+		return
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
@@ -206,17 +204,19 @@ def preview_graph():
 def make_graph(bounds = False):
 	global vals
 	vals = []
-	
-	'''
-	UNCOMMENT LATER?
-	folder_selected = filedialog.askdirectory(title='Choose Location to Save Data')
-	'''
 
 	#in case matplotlib crashes
 	plt.clf()
-		
-	top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L")
-	bottom_line = Image.open('../temp_resources/bottomstrip.jpeg').convert("L")
+
+	try:	
+		top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L")
+		bottom_line = Image.open('../temp_resources/bottomstrip.jpeg').convert("L")
+	except:
+		print("No ROI selected")
+		return
+	
+	#special treatment for this disaster
+	export_button['state'] = 'normal'
 
 	#convert to numpy array
 	np_top = np.array(top_line)
@@ -242,8 +242,8 @@ def make_graph(bounds = False):
 
 	#smoothing
 	if int(smooth_val) > 0:
-		x1 = smooth(x1, int(len(x1)/3 * (float(float(smooth_val))/100.000)))
-		x2 = smooth(x2, int(len(x2)/3 * (float(float(smooth_val))/100.000)))
+		x1 = smooth(x1, int(smooth_val))
+		x2 = smooth(x2, int(smooth_val))
 		
 		x1 = x1[1:(len(x1) - 1)]
 		x2 = x2[1:(len(x2) - 1)]
@@ -298,16 +298,7 @@ def make_graph(bounds = False):
 	t1 = [i+int(h_shift_val)*0.75 for i in t1]
 	x1 = [i+int(v_shift_val)*0.75 for i in x1]
 
-	'''
-	if h_shift_val == 0:
-		horizontal_shift_slider['from'] = t1[-1]/2 * -1
-		horizontal_shift_slider['to'] = t1[-1]/2
-	if v_shift_val == 0:
-		vertical_shift_slider['from'] = highest_intensity/2 * -1
-		vertical_shift_slider['to'] = highest_intensity/2
-	'''
-
-	#NO THIS IS THE FISHY PART TOO
+	#bounds selection
 	if bounds == True:
 		plt.clf()
 		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
@@ -321,8 +312,6 @@ def make_graph(bounds = False):
 		points_right_peak = [left_point, right_point]
 		plt.clf()
 
-		#print('right {} {} {}'.format(clicked, control_peak, points_right_peak))
-
 		if peaks_num_grabbed == 102:
 			plt.clf()
 			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
@@ -335,10 +324,6 @@ def make_graph(bounds = False):
 			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
 			points_left_peak = [left_point, right_point]
 			plt.clf()
-			
-			#print('left {} {} {} \n\n\n{} \n\n\n'.format(clicked, test_peak, points_left_peak, t1, t1[points_left_peak[0]]))
-	
-	#add t[0] to the clicked value and then ur done
 
 	#matplot plotting
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
@@ -371,7 +356,7 @@ def make_graph(bounds = False):
 	figure = plt.gcf()
 	figure.set_size_inches(15, 10)
 
-	#FIXED AH
+	#shading of area under curve
 	if bounds == True:
 		try:
 			t1 = t1.tolist()
@@ -379,39 +364,46 @@ def make_graph(bounds = False):
 			try:
 				t2 = t2.tolist()
 			except:
-				print("Shading..")
-
-		plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
-		plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
-
-		vals.extend([simps(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])])), dx=0.01)])
-		vals.extend([simps(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])])), dx=0.01)])
-		vals.extend([max(x1[points_right_peak[0]:points_right_peak[1]]), max(x2[points_right_peak[0]:points_right_peak[1]]), points_right_peak[0], points_right_peak[1]])
-
+				pass
+		
+		print("Shading...")
+		
+		try:
+			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+			plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
+		
+			vals.extend([simps(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])])), dx=0.01)])
+			vals.extend([simps(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])])), dx=0.01)])
+			vals.extend([max(x1[points_right_peak[0]:points_right_peak[1]]), max(x2[points_right_peak[0]:points_right_peak[1]]), points_right_peak[0], points_right_peak[1]])
+		except:
+			print("Invalid bounds on control peak")
+		
 		if peaks_num_grabbed == 102:
-			plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0] + t1[0]) & (t1 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
-			plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0] + t1[0]) & (t2 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
-			vals.extend([simps(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])])), dx=0.01)])
-			vals.extend([simps(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])])), dx=0.01)])
-			vals.extend([max(x1[points_left_peak[0]:points_left_peak[1]]), max(x2[points_left_peak[0]:points_left_peak[1]]), points_left_peak[0], points_left_peak[1]])
-
+			try:
+				plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0] + t1[0]) & (t1 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+				plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0] + t1[0]) & (t2 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+			
+				vals.extend([simps(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])])), dx=0.01)])
+				vals.extend([simps(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])])), dx=0.01)])
+				vals.extend([max(x1[points_left_peak[0]:points_left_peak[1]]), max(x2[points_left_peak[0]:points_left_peak[1]]), points_left_peak[0], points_left_peak[1]])
+			except:
+				print("Invalid bounds on test peak")
+		
 	global im
 	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('../temp_resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
 #saves graph
-#except needs more data to save 
 def save_graph():
-	f = filedialog.askdirectory(title='Choose Location to Save Data')
+	f = filedialog.askdirectory(initialdir='./', title='Choose Location to Save Data')
 	if f:
 		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
 		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
 		worksheet = workbook.add_worksheet()
-		# Add a bold format to use to highlight cells.
+		#adds a bold format to use to highlight cells
 		bold = workbook.add_format({'bold': True})
 
-		#vals = [t1, x1, t2, x2, area_peak_left_x1, area_padfax2, prekarightx1, same x2]
 		worksheet.write('A1', 'Top Strip X-values (initial)', bold)
 		worksheet.write('B1', 'Top Strip Y-values (initial)', bold)
 		worksheet.write('C1', 'Bottom Strip X-values (initial)', bold)
@@ -478,29 +470,16 @@ def save_graph():
 			worksheet.write('K6', vals[14])
 			worksheet.write('L6', vals[15])
 
-		# Insert an image.
+		#inserts cropped ROI image
 		worksheet.insert_image('J8', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
 		worksheet.insert_image('J27', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
 
 		workbook.close()
+		
+		print("Data for " + os.path.split(root.filename)[1].split('.jpg')[0] + " successfully exported")
 
 	elif f is None:
 		return
-
-#makes sure things inputted into the v_shift and h_shift text areas are strictly numbers of 8 characters or less (i.e. -5.2, 5, 195.925)
-def character_limit(p):
-	if len(p.get()) > 6 or is_number(p.get()) == False:
-		p.set(p.get()[:-1])
-
-#checks if value is a number
-def is_number(n):
-	try:
-		float(n)
-		return True
-	except:
-		if n == "-":
-			return True
-		return False
 
 #initializes tkinter GUI
 def init():
@@ -525,13 +504,13 @@ def init():
 	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,10))
 
 	Label(left_frame, text="Threshold Slider", justify="center").pack(pady=(0,5))
-	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=50.0, command=update_thresh)
+	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
 	threshold_slider.pack(padx=20, pady=(0,10))
 
 	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0,15))
 
 	Label(left_frame, text="Curve Smoothing", justify="center", padx=20).pack()
-	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=100.0, command=update_smooth)
+	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=30.0, command=update_smooth)
 	curve_smoothing_slider.pack(padx=20, pady=(0,20))
 	curve_smoothing_slider['state'] = 'disable'
 
@@ -570,23 +549,11 @@ def init():
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
-	'''
-	h_shift = StringVar()
-	horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-	horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
-	h_shift.trace('w', lambda *args:character_limit(h_shift))
-	'''
 
 	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1)
 	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
 	vertical_shift_slider['state'] = 'disable'
-	'''
-	v_shift = StringVar()
-	vertical_shift_box = Entry(sub_middle_frame, textvariable=v_shift, width=8)
-	vertical_shift_box.grid(column=1, row=2, pady=(0,5))
-	v_shift.trace('w', lambda *args:character_limit(v_shift))
-	'''
 
 	#right side graph
 	width, height = plot_disp_size
