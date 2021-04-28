@@ -25,11 +25,11 @@ bounds = []
 plot_disp_size = (int(430*1.5), 430)
 
 #creates resource folder in the current directory
-if 'temp_resources' not in os.listdir('../'):
-	os.mkdir('../temp_resources')
+if 'temp_resources' not in os.listdir('./'):
+	os.mkdir('./temp_resources')
 
-if 'cropped' not in os.listdir('../temp_resources'):
-	os.mkdir('../temp_resources/cropped')
+if 'cropped' not in os.listdir('./temp_resources'):
+	os.mkdir('./temp_resources/cropped')
 
 #for exiting the program
 def on_closing():
@@ -37,7 +37,7 @@ def on_closing():
 		print("[Exited]")
 		root.quit()
 		root.destroy()
-		rmtree('../temp_resources')
+		rmtree('./temp_resources')
 
 #widget for creating help window
 class CustomText(Text):
@@ -132,10 +132,10 @@ def thresh_and_crop():
 	img_crop = img_thresh[ymin:ymax, xmin:xmax]
 
 	#saves cropped image in cropped folder
-	cv2.imwrite('../temp_resources/cropped/' + os.path.split(img_path)[1], img_crop)
+	cv2.imwrite('./temp_resources/cropped/' + os.path.split(img_path)[1], img_crop)
 
 	global im
-	imtemp = Image.open('../temp_resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
+	imtemp = Image.open('./temp_resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
 	image_canvas.itemconfigure(imload, image=im)
 
@@ -143,7 +143,7 @@ def thresh_and_crop():
 def find_roi():
 	try:
 		global img_path
-		img_path = '../temp_resources/cropped/' + os.path.split(root.filename)[1]
+		img_path = './temp_resources/cropped/' + os.path.split(root.filename)[1]
 	except:
 		print("Image path not defined")
 		return
@@ -163,8 +163,8 @@ def find_roi():
 	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 
 	try:
-		cv2.imwrite("../temp_resources/topstrip.jpeg", roi_cropped1)
-		cv2.imwrite('../temp_resources/bottomstrip.jpeg', roi_cropped2)
+		cv2.imwrite("./temp_resources/topstrip.jpeg", roi_cropped1)
+		cv2.imwrite('./temp_resources/bottomstrip.jpeg', roi_cropped2)
 	except:
 		print("No ROI selected")
 
@@ -175,7 +175,7 @@ def update_smooth(val):
 	global smooth_val
 	smooth_val = val
 	make_graph()
-	os.remove('../temp_resources/temp.png')
+	os.remove('./temp_resources/temp.png')
 
 #curve smoothing
 def smooth(interval, window_size):
@@ -207,20 +207,20 @@ def update_h_shift(val):
 	global h_shift_val
 	h_shift_val = val
 	make_graph()
-	os.remove('../temp_resources/temp.png')
+	os.remove('./temp_resources/temp.png')
 
 #vertical shift slider
 def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
 	make_graph()
-	os.remove('../temp_resources/temp.png')
+	os.remove('./temp_resources/temp.png')
 
 #preview button
 def preview_graph():
 	make_graph()
 	try:
-		os.remove('../temp_resources/temp.png')
+		os.remove('./temp_resources/temp.png')
 	except:
 		return
 	curve_smoothing_slider['state'] = 'normal'
@@ -236,8 +236,8 @@ def make_graph(bounds = False):
 	plt.clf()
 
 	try:	
-		top_line = Image.open('../temp_resources/topstrip.jpeg').convert("L")
-		bottom_line = Image.open('../temp_resources/bottomstrip.jpeg').convert("L")
+		top_line = Image.open('./temp_resources/topstrip.jpeg').convert("L")
+		bottom_line = Image.open('./temp_resources/bottomstrip.jpeg').convert("L")
 	except:
 		print("No ROI selected")
 		return
@@ -417,8 +417,8 @@ def make_graph(bounds = False):
 				print("Invalid bounds on test peak")
 		
 	global im
-	plt.savefig('../temp_resources/temp.png', bbox_inches='tight')
-	im = ImageTk.PhotoImage(Image.open('../temp_resources/temp.png').resize(plot_disp_size))
+	plt.savefig('./temp_resources/temp.png', bbox_inches='tight')
+	im = ImageTk.PhotoImage(Image.open('./temp_resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
 
 #saves graph
