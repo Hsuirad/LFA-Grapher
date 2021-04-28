@@ -8,9 +8,8 @@ import tkinter
 from scipy.signal import find_peaks
 import math
 import re
-from tkinter import messagebox
 from matplotlib.ticker import (AutoMinorLocator)
-from tkinter import Radiobutton, Frame, Button, filedialog, Scale, Canvas, PhotoImage, Label, Scale, Entry, StringVar
+from tkinter import Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, PhotoImage, Label, Scale, Entry, StringVar
 from shutil import rmtree
 import xlsxwriter
 
