@@ -39,23 +39,12 @@ def on_closing():
 		root.destroy()
 		rmtree('../temp_resources')
 
+#widget for creating help window
 class CustomText(Text):
-    '''A text widget with a new method, HighlightPattern 
-
-    example:
-
-    text = CustomText()
-    text.tag_configure("red",foreground="#ff0000")
-    text.HighlightPattern("this should be red", "red")
-
-    The HighlightPattern method is a simplified python 
-    version of the tcl code at http://wiki.tcl.tk/3246
-    '''
     def __init__(self, *args, **kwargs):
         Text.__init__(self, *args, **kwargs)
 
     def HighlightPattern(self, pattern, tag, start="1.0", end="end", regexp=True):
-        '''Apply the given tag to all text that matches the given pattern'''
 
         start = self.index(start)
         end = self.index(end)
@@ -76,7 +65,6 @@ def help_window():
 	window = tkinter.Toplevel(root)
 	window.title("Help") 
 	window.geometry("800x600")
-	text = "This is \na test"
 	f = open("DIRECTIONS.txt", 'r')
 	text = f.readlines()
 	f.close()
@@ -90,7 +78,7 @@ def help_window():
 
 #opens dialog to select image
 def select_file():
-	root.filename = filedialog.askopenfilename(initialdir="./", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
+	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
 #threshold slider
 def update_thresh(val):
@@ -435,7 +423,7 @@ def make_graph(bounds = False):
 
 #saves graph
 def save_graph():
-	f = filedialog.askdirectory(initialdir='./', title='Choose Location to Save Data')
+	f = filedialog.askdirectory(initialdir='../', title='Choose Location to Save Data')
 	if f:
 		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
 		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
@@ -541,9 +529,9 @@ def init():
 	#left side inputs
 	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(10,10))
 
-	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,10))
+	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,15))
 
-	Label(left_frame, text="Threshold Slider", justify="center").pack(pady=(0,5))
+	Label(left_frame, text="Threshold and Crop", justify="center").pack()
 	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
 	threshold_slider.pack(padx=20, pady=(0,10))
 
