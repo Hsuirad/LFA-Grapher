@@ -322,8 +322,8 @@ def make_graph(bounds = False):
 		t2 = [i+x1_peak-x2_peak for i in t2]
 
 	#manual h and v shift 
-	t1 = [i+int(h_shift_val)*0.75 for i in t1]
-	x1 = [i+int(v_shift_val)*0.75 for i in x1]
+	t1 = [i+int(h_shift_val) for i in t1]
+	x1 = [i+int(v_shift_val) for i in x1]
 
 	#bounds selection
 	if bounds == True:
