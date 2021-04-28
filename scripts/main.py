@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import Image, ImageTk, ImageOps
+from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 import cv2
 from scipy.integrate import simps
