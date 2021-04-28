@@ -9,7 +9,7 @@ from scipy.signal import find_peaks
 import math
 import re
 from matplotlib.ticker import (AutoMinorLocator)
-from tkinter import Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, PhotoImage, Label, Scale, Entry, StringVar
+from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, PhotoImage, Label, Scale, Entry, StringVar
 from shutil import rmtree
 import xlsxwriter
 
@@ -24,7 +24,7 @@ bounds = []
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
 
-#creates resource folder in path
+#creates resource folder in the current directory
 if 'temp_resources' not in os.listdir('../'):
 	os.mkdir('../temp_resources')
 
@@ -34,18 +34,59 @@ if 'cropped' not in os.listdir('../temp_resources'):
 #for exiting the program
 def on_closing():
 	if messagebox.askokcancel("Quit", "Are you sure you want to quit (unsaved data will be discarded)?"):
-		print("Exited")
+		print("[Exited]")
 		root.quit()
 		root.destroy()
 		rmtree('../temp_resources')
 
+class CustomText(Text):
+    '''A text widget with a new method, HighlightPattern 
+
+    example:
+
+    text = CustomText()
+    text.tag_configure("red",foreground="#ff0000")
+    text.HighlightPattern("this should be red", "red")
+
+    The HighlightPattern method is a simplified python 
+    version of the tcl code at http://wiki.tcl.tk/3246
+    '''
+    def __init__(self, *args, **kwargs):
+        Text.__init__(self, *args, **kwargs)
+
+    def HighlightPattern(self, pattern, tag, start="1.0", end="end", regexp=True):
+        '''Apply the given tag to all text that matches the given pattern'''
+
+        start = self.index(start)
+        end = self.index(end)
+        self.mark_set("matchStart",start)
+        self.mark_set("matchEnd",end)
+        self.mark_set("searchLimit", end)
+
+        count = tkinter.IntVar()
+        while True:
+            index = self.search(pattern, "matchEnd","searchLimit",count=count, regexp=regexp)
+            if index == "": break
+            self.mark_set("matchStart", index)
+            self.mark_set("matchEnd", "%s+%sc" % (index,count.get()))
+            self.tag_add(tag, "matchStart","matchEnd")
+
 #presents a help window with documentation on how to use our program, will make it read from the README.md file later
 def help_window():
 	window = tkinter.Toplevel(root)
-	window.title("New Window") 
-	window.geometry("200x200")
+	window.title("Help") 
+	window.geometry("800x600")
 	text = "This is \na test"
-	label = Label(window, text=text).pack(anchor='nw') 
+	f = open("DIRECTIONS.txt", 'r')
+	text = f.readlines()
+	f.close()
+	t = CustomText(window, wrap="word", width=100, height=10, borderwidth=2)
+	t.pack(sid="top", fill="both", expand=True)
+	t.insert("1.0","".join(text))
+	t.config(state='disable')
+	t.tag_configure("blue", foreground="blue")
+	t.HighlightPattern("/\D{1,}[^:]:/g", "blue")
+	Button(window, text="OK", command=window.destroy).pack()
 
 #opens dialog to select image
 def select_file():
@@ -402,6 +443,7 @@ def save_graph():
 		#adds a bold format to use to highlight cells
 		bold = workbook.add_format({'bold': True})
 
+		#initialize the top row labels, all with bold text
 		worksheet.write('A1', 'Top Strip X-values (initial)', bold)
 		worksheet.write('B1', 'Top Strip Y-values (initial)', bold)
 		worksheet.write('C1', 'Bottom Strip X-values (initial)', bold)
@@ -505,49 +547,53 @@ def init():
 	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
 	threshold_slider.pack(padx=20, pady=(0,10))
 
+	#button for selecting the region of interest (ROI), this ROI is then analyzed for the graph
 	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0,15))
 
+	#slider for determining how much the curve is smoothed out (typically has very many oscillations and spikes)
 	Label(left_frame, text="Curve Smoothing", justify="center", padx=20).pack()
 	curve_smoothing_slider = Scale(left_frame, orient="horizontal", length=200, from_=0.0, to=30.0, command=update_smooth)
 	curve_smoothing_slider.pack(padx=20, pady=(0,20))
 	curve_smoothing_slider['state'] = 'disable'
 
+	#determines whether the baselining will happen from the lowest value (from both curves lowest val is zeroed) or midpoint (average value of both is zeroed and then lowest value brought to zero)
 	baseline_choice = tkinter.IntVar()
 	baseline_choice.set(1)
 	modes = [("Midpoint", 101), ("Lowest Value", 102)]
 	Label(left_frame, text="Baseline from:", justify="left", padx=20).pack()
-	i=0
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_baseline, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
-		i+=1
 
+	#a multiple choice field for how many peaks you want analyzed at the current moment
 	peak_num_choice = tkinter.IntVar()
 	peak_num_choice.set(1)
 	modes = [("One Peak", 101), ("Two Peaks", 102)]
 	Label(left_frame, text="How many peaks to compare:", justify="left", padx=20).pack(pady=(20,0))
-	i=0
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_peaks, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
-		i+=1
 
 	#bottom row inputs
 	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)
 	bounds_button.pack(side="left", padx=(15,10), pady=(30,10))
 	bounds_button["state"] = "disable"
 
+	#building the preview button, used to look at the current strip being analyzed
 	preview_button = Button(left_frame, text="Preview", command=preview_graph)
 	preview_button.pack(side="left", padx=(10,10), pady=(30,10))
 	preview_button["state"] = "disable"
 
+	#building the export button, disabled at first until you have data to export
 	export_button = Button(left_frame, text="Export", command=save_graph)
 	export_button.pack(side="left", padx=(10,0), pady=(30,10))
 	export_button["state"] = "disable"
 
+	#building the horizontal shift (used to shift one line left and right)
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
 
+	#building the vertical shift (shifts one line up and down)
 	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1)
 	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
@@ -558,6 +604,7 @@ def init():
 	image_canvas = Canvas(middle_frame, width=width, height=height)
 	image_canvas.pack(padx=(20,0), pady=(0,0))
 
+	#blanks canvas with a white frame, image_canvas is modified to add the graph onto screen each time
 	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  #PIL solution
 	imload = image_canvas.create_image(0, 0, image=im, anchor='nw')
 

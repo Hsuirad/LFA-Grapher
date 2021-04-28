@@ -1,0 +1,32 @@
+Basic steps:
+	1. import data
+	2. choose region of interest (ROI)
+	3. choose baseline mode
+	4. click how many peaks will be analyzed based on highest number of bands in samples
+	5. choose peaks
+	6. preview graph, adjust h-shift and v-shift, and then export to your desired destination
+
+
+Importing Data:
+	*Can only import image files*
+	1. Choose the data file to be imported
+	2. Use the "threshold slider" to get to a close crop of the strips
+	3. Press "Select the ROI" to select Region of Interest (ROI)
+	4. Drag over the region you want analyzed and nothing more, then press enter/space
+
+Graphing:
+	1. Choose where to baseline from
+		- Lowest Value: puts the lowest value of one curve at 0
+		- Midpoint: puts the mean of all curves at 0, then brings the lowest value up to 0
+	2. Press preview to see the current graph
+	3. Change the curve smoothing if desired to get a less bumpy curve
+	4. Use "Horizontal Shift" and "Vertical Shift" to fix the peak alignments
+	5. Choose the max number of bands (peaks) present in the strips
+	6. Press "Choose Bounds"
+	7. Read the title of the graph prompt to see which peak to denote
+		- Choose left and right of peak as well (for area measurements)
+
+Exporting/Saving:
+	1. Press "Export", and choose the desination you would like to save your .xlsx file to
+		- The .png of the graph will also be saved there
+	2. Close out of the program or continue for more samples
