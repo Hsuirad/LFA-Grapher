@@ -19,14 +19,10 @@ root.title("Intensity Grapher")
 smooth_val = 0
 h_shift_val = 0
 v_shift_val = 0
+bounds = []
 
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
-
-#text_entry_arr = []
-text_box_arr = []
-
-bounds = []
 
 #creates resource folder in path
 if 'temp_resources' not in os.listdir('../'):
@@ -177,18 +173,21 @@ def choose_peak_bounds():
 	make_graph(bounds = True)
 	return bounds
 
+#horizontal shift slider
 def update_h_shift(val):
 	global h_shift_val
 	h_shift_val = val
 	make_graph()
 	os.remove('../temp_resources/temp.png')
 
+#vertical shift slider
 def update_v_shift(val):
 	global v_shift_val
 	v_shift_val = val
 	make_graph()
 	os.remove('../temp_resources/temp.png')
 
+#preview button
 def preview_graph():
 	make_graph()
 	try:
@@ -199,7 +198,7 @@ def preview_graph():
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
 
-#previews graph
+#displays graph
 def make_graph(bounds = False):
 	global vals
 	vals = []
