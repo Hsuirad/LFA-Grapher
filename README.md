@@ -1,18 +1,6 @@
 # LFA Grapher
 
-Directions:
-asldkfjasldf
-
-
-# Examples:
-
-## Test Image
-
-![test image](test-data/example.jpg)
-
-## Graph + Software
-
-![example image](test-data/screenshot.png)
+A simple utility tool to help scan Lateral Flow Assay (LFA) strips and quantitatively return intensity. Allows the comparison between two or more consecutive strips to see which band is more intense, which is more of a sharp spike, etc.
 
 # Directions:
 
@@ -48,3 +36,14 @@ asldkfjasldf
 	1. Once you are happy with your graph, press "Export" and choose the folder you would like to save your graph and data to
 		The data will be saved in an Excel with the table of values for each line and various calculations based on the selected peaks
 	2. Close out of the program by clicking the "X" in the top right, or continue for more samples
+
+
+# Examples:
+
+## Test Image
+
+![test image](test-data/example.jpg)
+
+## Graph + Software
+
+![example image](test-data/screenshot.png)
