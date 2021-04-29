@@ -336,7 +336,7 @@ def make_graph(bounds = False):
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
 		right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[1]))
-		points_right_peak = [left_point, right_point]
+		points_right_peak = [left_point + t1[0], right_point + t1[0]]
 		plt.clf()
 
 		if peaks_num_grabbed == 102:
@@ -349,9 +349,11 @@ def make_graph(bounds = False):
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
 			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
 			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
-			points_left_peak = [left_point, right_point]
+			points_left_peak = [left_point + t1[0], right_point + t1[0]]
 			plt.clf()
 
+			print(points_right_peak, points_left_peak, t1[0])
+	
 	#matplot plotting
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 	ax = plt.subplot(111)
@@ -396,23 +398,23 @@ def make_graph(bounds = False):
 		print("Shading...")
 		
 		try:
-			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0] + t1[0]) & (t1 <= points_right_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
-			plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0] + t1[0]) & (t2 <= points_right_peak[1] + t1[0]), color = (0, 0, 1, 0.2))
+			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (1, 0, 0, 0.2))
+			plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0]) & (t2 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
 		
-			vals.extend([simps(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x1[t1.index(points_right_peak[0] + t1[0]):t1.index(points_right_peak[1] + t1[0])])), dx=0.01)])
-			vals.extend([simps(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])], np.linspace(points_right_peak[0] + t1[0], points_right_peak[1] + t1[0], num=len(x2[t2.index(points_right_peak[0] + t1[0]):t2.index(points_right_peak[1] + t1[0])])), dx=0.01)])
-			vals.extend([max(x1[points_right_peak[0]:points_right_peak[1]]), max(x2[points_right_peak[0]:points_right_peak[1]]), points_right_peak[0], points_right_peak[1]])
+			vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
+			vals.extend([simps(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])])), dx=0.01)])
+			vals.extend([max(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])]), max(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])]), points_right_peak[0], points_right_peak[1]])
 		except:
 			print("Invalid bounds on control peak")
 		
 		if peaks_num_grabbed == 102:
 			try:
-				plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0] + t1[0]) & (t1 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
-				plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0] + t1[0]) & (t2 <= points_left_peak[1] + t1[0]), color = (1, 0, 0, 0.2))
+				plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0]) & (t1 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
+				plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0]) & (t2 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
 			
-				vals.extend([simps(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x1[t1.index(points_left_peak[0] + t1[0]):t1.index(points_left_peak[1] + t1[0])])), dx=0.01)])
-				vals.extend([simps(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])], np.linspace(points_left_peak[0] + t1[0], points_left_peak[1] + t1[0], num=len(x2[t2.index(points_left_peak[0] + t1[0]):t2.index(points_left_peak[1] + t1[0])])), dx=0.01)])
-				vals.extend([max(x1[points_left_peak[0]:points_left_peak[1]]), max(x2[points_left_peak[0]:points_left_peak[1]]), points_left_peak[0], points_left_peak[1]])
+				vals.extend([simps(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])])), dx=0.01)])
+				vals.extend([simps(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])])), dx=0.01)])
+				vals.extend([max(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])]), max(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])]), points_left_peak[0], points_left_peak[1]])
 			except:
 				print("Invalid bounds on test peak")
 		
