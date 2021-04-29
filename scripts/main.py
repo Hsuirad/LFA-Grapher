@@ -351,8 +351,6 @@ def make_graph(bounds = False):
 			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
 			points_left_peak = [left_point + t1[0], right_point + t1[0]]
 			plt.clf()
-
-			print(points_right_peak, points_left_peak, t1[0])
 	
 	#matplot plotting
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
