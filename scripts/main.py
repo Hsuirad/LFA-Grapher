@@ -80,6 +80,17 @@ def help_window():
 def select_file():
 	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
 
+	try:
+		img_path = root.filename
+	except:
+		print("Root Filename not compatible with image path")
+		return
+	
+	global im
+	imtemp = Image.open(img_path).resize(plot_disp_size)
+	im = ImageTk.PhotoImage(imtemp)
+	image_canvas.itemconfigure(imload, image=im)
+
 #threshold slider
 def update_thresh(val):
 	global thresh_val
