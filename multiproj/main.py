@@ -13,6 +13,8 @@ from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Sc
 from shutil import rmtree
 import xlsxwriter
 
+'''start preserve
+
 #make GUI
 root = tkinter.Tk()
 root.title("Intensity Grapher")
@@ -20,6 +22,8 @@ smooth_val = 0
 h_shift_val = 0
 v_shift_val = 0
 bounds = []
+
+num_strips = 0
 
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
@@ -85,7 +89,7 @@ def select_file():
 	except:
 		print("Root Filename not compatible with image path")
 		return
-
+	
 	global im
 	imtemp = Image.open(img_path).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
@@ -126,7 +130,7 @@ def thresh_and_crop():
 	ymin = cnt_sort[-1][0][0][1]
 	ymax = 0
 
-	#finding lowest x val and highest x val
+	#finding lowest and highest x and y vals
 	for i in range(len(cnt_sort)):
 		for j in range(len(cnt_sort[i])):
 			for z in range(len(cnt_sort[i][j])):
@@ -149,6 +153,9 @@ def thresh_and_crop():
 	imtemp = Image.open('./temp_resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
 	image_canvas.itemconfigure(imload, image=im)
+
+end preserve'''
+
 
 #finding regions of interest
 def find_roi():
@@ -180,6 +187,8 @@ def find_roi():
 		print("No ROI selected")
 
 	cv2.destroyAllWindows()
+
+'''start preserve
 
 #smoothing filter slider
 def update_smooth(val):
@@ -237,6 +246,9 @@ def preview_graph():
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
+
+end preserve'''
+
 
 #displays graph
 def make_graph(bounds = False):
@@ -380,7 +392,6 @@ def make_graph(bounds = False):
 	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
 	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
 
-	plt.title(str(img_path).split('cropped/')[1], loc = 'right')
 	plt.ylabel('Rel. Int. (% max)', **hfont)
 	plt.xlabel('Pixel distance', **hfont)
 
@@ -538,14 +549,11 @@ def init():
 	sub_middle_frame = Frame(middle_frame)
 	sub_middle_frame.pack(side="bottom", pady=(0,10))
 
-	#LEFT SIDE
-	#help button
+	#left side inputs
 	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(10,10))
 
-	#button for selecting image file to analyze
 	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,15))
 
-	#slider for scaling the cropped image
 	Label(left_frame, text="Threshold and Crop", justify="center").pack()
 	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
 	threshold_slider.pack(padx=20, pady=(0,10))
@@ -575,7 +583,7 @@ def init():
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_peaks, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
 
-	#building the bounds button, for selecting left and right bounds of target peaks
+	#bottom row inputs
 	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)
 	bounds_button.pack(side="left", padx=(15,10), pady=(30,10))
 	bounds_button["state"] = "disable"
@@ -590,14 +598,13 @@ def init():
 	export_button.pack(side="left", padx=(10,0), pady=(30,10))
 	export_button["state"] = "disable"
 
-	#RIGHT SIDE
-	#building the horizontal shift slider (used to shift one line left and right)
+	#building the horizontal shift (used to shift one line left and right)
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
 
-	#building the vertical shift slider (shifts one line up and down)
+	#building the vertical shift (shifts one line up and down)
 	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1)
 	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
