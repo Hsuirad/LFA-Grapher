@@ -300,8 +300,7 @@ def make_graph(bounds = False):
 	export_button['state'] = 'normal'
 
 	#convert to numpy array
-	T = [] # array of all t-value lists
-	X = [] # array of all x-value lists
+	X = [] # capital to denote 2d array
 	 
 	for i in range(number_of_strips):
 		np_strips = np.array(strips[i])
@@ -316,8 +315,7 @@ def make_graph(bounds = False):
 	#initial values
 	if len(init_vals) == 0:
 		for i in range(number_of_strips):
-			T.append(np.arange(len(X[i])))
-			init_vals.extend([T[i], X[i]])
+			init_vals.extend([np.arange(len(X[i])), X[i]])
 
 	S = [] # smoothed x's
 
@@ -345,11 +343,10 @@ def make_graph(bounds = False):
 
 	flattened_S = [j for sub in S for j in sub] # turns 2d array into single 1d array
 	
-	low_val = int(np.amin(flattened_S))
+	low_val = min(flattened_S)
 
 	for i in range(number_of_strips):
 		S[i] = [j-low_val for j in S[i]]
-
 
 	#convert to numpy array
 	# np_top = np.array(top_line)
@@ -398,56 +395,45 @@ def make_graph(bounds = False):
 	# x2 = [i-low_val for i in x2]
 
 	
-	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
-	highest_intensity = np.amax(flattened_S)
+	high_val = max(flattened_S)
 	
-	peaks = []
-	control_peaks = []
+	control_peak_indices = []
 	
 	for i in range(number_of_strips):
 		for j in range(len(S[i])):
-			S[i][j] = round((float(S[i][j]) / float(highest_intensity)) * 100.00000, 2)
+			S[i][j] = round((float(S[i][j]) / float(high_val)) * 100.00000, 2)
 
-	#peak adjustment
+	#peak detection and adjustment
 	for i in range(number_of_strips):	
-		temp, _ = find_peaks(np.array(S[i]), height=15, distance=10, width=10)
-		peaks.append(temp)
+		peak_indices, _ = find_peaks(np.array(S[i]), height=15, distance=10, width=10)
 
-		peak = 0
+		index = 0
 
-		for j in temp:
-			if S[i][j] > S[i][peak]:
-				peak = i
+		for j in peak_indices:
+			if S[i][j] > S[i][index]:
+				index = j
 
-		control_peaks.append(peak)
+		control_peak_indices.append(index)
 
-	peak_max = np.amax(control_peaks)
+	max_index = np.amax(control_peak_indices)
 
-	t_is_empty = True
-	
-	if len(T) > 0:
-		t_is_empty = False
+	T = []
 
 	for i in range(number_of_strips):
 		t = np.arange(len(S[i]))
+		t = [j+max_index-control_peak_indices[i] for j in t]
+		T.append(t)
 
-		if control_peaks[i] < peak_max:
-			t = [x+peak_max-control_peaks[i] for x in t]
-		elif control_peaks[i] > peak_max:
-			t = [x+control_peaks[i]-peak_max for x in t]
+	# t = [j+int(h_shift_val) for j in t]
+	# S[i] = [j+int(v_shift_val) for j in S[i]]
 
-		t = [x + int(h_shift_val) for x in t]
-		S[i] = [x + int(v_shift_val) for x in S[i]]
-		if t_is_empty:
-			T.append(t)
-		else:
-			T[i] = t
+####################################################################################
 
 	# for i in range(len(x1)):
-	# 	x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
+	# 	x1[i] = round((float(x1[i]) / float(high_val)) * 100.00000, 2)
 	# for i in range(len(x2)):
-	# 	x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
+	# 	x2[i] = round((float(x2[i]) / float(high_val)) * 100.00000, 2)
 
 	#new auto peak detector for initial horizontal adjustment
 	
