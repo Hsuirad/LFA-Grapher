@@ -13,7 +13,25 @@ from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Sc
 from shutil import rmtree
 import xlsxwriter
 
-'''start preserve
+#character limits
+def character_limit(p):
+	if len(p.get()) > 6 or is_number(p.get()) == False:
+		p.set(p.get()[:-1])
+		
+#checks if value is a number
+def is_number(n):
+	try:
+		float(n)
+		return True
+	except:
+		if n == "-":
+			return True
+		return False
+
+		h_shift = StringVar()
+		horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+		horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
+		h_shift.trace('w', lambda *args:character_limit(h_shift))
 
 #make GUI
 root = tkinter.Tk()
@@ -22,8 +40,6 @@ smooth_val = 0
 h_shift_val = 0
 v_shift_val = 0
 bounds = []
-
-num_strips = 0
 
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
@@ -80,6 +96,14 @@ def help_window():
 	t.HighlightPattern("/\D{1,}[^:]:/g", "blue")
 	Button(window, text="OK", command=window.destroy).pack()
 
+def error_window(error_message):
+	window = tkinter.Toplevel(root)
+	window.title("ERROR") 
+	window.geometry("300x250")
+	text = error_message
+	t = Label(window, text=text, width=100, height=10, borderwidth=2).pack()
+	Button(window, text="OK", command=window.destroy).pack()
+
 #opens dialog to select image
 def select_file():
 	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
@@ -89,7 +113,7 @@ def select_file():
 	except:
 		print("Root Filename not compatible with image path")
 		return
-	
+
 	global im
 	imtemp = Image.open(img_path).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
@@ -130,7 +154,7 @@ def thresh_and_crop():
 	ymin = cnt_sort[-1][0][0][1]
 	ymax = 0
 
-	#finding lowest and highest x and y vals
+	#finding lowest x val and highest x val
 	for i in range(len(cnt_sort)):
 		for j in range(len(cnt_sort[i])):
 			for z in range(len(cnt_sort[i][j])):
@@ -154,11 +178,10 @@ def thresh_and_crop():
 	im = ImageTk.PhotoImage(imtemp)
 	image_canvas.itemconfigure(imload, image=im)
 
-end preserve'''
-
-
 #finding regions of interest
 def find_roi():
+	global number_of_strips
+
 	try:
 		global img_path
 		img_path = './temp_resources/cropped/' + os.path.split(root.filename)[1]
@@ -171,24 +194,28 @@ def find_roi():
 		return
 
 	img_raw = cv2.imread(img_path)
-	
-	#select ROI function 1 (top strip)
-	roi = cv2.selectROI(img_raw)
-	roi_cropped1 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])]
-
-	#select ROI function 2 (bottom strip)
-	roi = cv2.selectROI(img_raw)
-	roi_cropped2 = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] 
 
 	try:
-		cv2.imwrite("./temp_resources/topstrip.jpeg", roi_cropped1)
-		cv2.imwrite('./temp_resources/bottomstrip.jpeg', roi_cropped2)
+		number_of_strips = int(strip_number.get())
+		print(number_of_strips)
+
+		roi_list = []
+
+		for i in range(number_of_strips):
+			roi = cv2.selectROI(img_raw) #select roi
+			roi_cropped = img_raw[int(roi[1]):int(roi[1]+roi[3]), int(roi[0]):int(roi[0]+roi[2])] #crop with selection
+			roi_list.append(roi_cropped) #append to global list
+
+		try:
+			for i in range(number_of_strips):
+				cv2.imwrite('./temp_resources/strip_{}.jpeg'.format(i+1), roi_list[i])
+		except:
+			print("No ROI selected")
+
+		cv2.destroyAllWindows()
 	except:
-		print("No ROI selected")
+		error_window("Strip number must be \nin integer format! \n(1, 2, 3, etc.)")
 
-	cv2.destroyAllWindows()
-
-'''start preserve
 
 #smoothing filter slider
 def update_smooth(val):
@@ -247,20 +274,24 @@ def preview_graph():
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
 
-end preserve'''
-
-
 #displays graph
 def make_graph(bounds = False):
 	global vals
 	vals = []
 
+	print(number_of_strips)
+
 	#in case matplotlib crashes
 	plt.clf()
 
+	strips = []
+
 	try:	
-		top_line = Image.open('./temp_resources/topstrip.jpeg').convert("L")
-		bottom_line = Image.open('./temp_resources/bottomstrip.jpeg').convert("L")
+		for i in range(number_of_strips):
+			strips.append(Image.open('./temp_resources/strip_{}.jpeg'.format(i+1)).convert("L"))
+
+		# top_line = Image.open('./temp_resources/topstrip.jpeg').convert("L")
+		# bottom_line = Image.open('./temp_resources/bottomstrip.jpeg').convert("L")
 	except:
 		print("No ROI selected")
 		return
@@ -269,118 +300,232 @@ def make_graph(bounds = False):
 	export_button['state'] = 'normal'
 
 	#convert to numpy array
-	np_top = np.array(top_line)
-	top_line_array = []
-	for elem in np_top:
-		if elem.sum() != 0:
-			top_line_array.append(elem)
-			
-	np_bottom = np.array(bottom_line)
-	bottom_line_array = []
-	for elem in np_bottom:
-		if elem.sum() != 0:
-			bottom_line_array.append(elem)
+	np_arrays_strips = []
+	
+	T = [] # capital to denote array
+	X = [] # capital to denote array
+	 
 
-	x1 = [float(sum(l))/len(l) for l in zip(*top_line_array)]
-	x2 = [float(sum(l))/len(l) for l in zip(*bottom_line_array)]
+	for i in range(number_of_strips):
+		temp = np.array(strips[i])
+		temp_array = []
+
+		for elem in temp:
+			if elem.sum() != 0:
+				temp_array.append(elem)
+				# print(elem)
+				# print('\nn\\n\n\n\n\nn\n\n')
+				# print(temp_array)
+
+		X.append([float(sum(l))/len(l) for l in zip(*temp_array)])
+	
+	#initial values
+	if len(init_vals) == 0:
+		for i in range(number_of_strips):
+			T.append(np.arange(len(X[i])))
+			init_vals.extend([T[i], X[i]])
+
+	S = [] #smoothed x's
+
+	#smoothing	
+	if int(smooth_val) > 0:
+		for i in range(number_of_strips):
+			temp = smooth(X[i], int(smooth_val))
+			temp = temp[1:(len(temp) - 1)]
+			S.append(temp)
+	if int(smooth_val) <= 0:	
+		S = X
+
+	X_mids = []
+
+	if baseline_grabbed == 101:
+		for i in range(number_of_strips):
+			X_mids.append(S[i][int(len(S[i])/2)])
+			S[i] = [x - X_mids[i] for x in S[i]]
+
+
+	#convert to numpy array
+	# np_top = np.array(top_line)
+	# top_line_array = []
+	# for elem in np_top:
+	# 	if elem.sum() != 0:
+	# 		top_line_array.append(elem)
+			
+	# np_bottom = np.array(bottom_line)
+	# bottom_line_array = []
+	# for elem in np_bottom:
+	# 	if elem.sum() != 0:
+	# 		bottom_line_array.append(elem)
+
+	# x1 = [float(sum(l))/len(l) for l in zip(*top_line_array)]
+	# x2 = [float(sum(l))/len(l) for l in zip(*bottom_line_array)]
 
 	#initial vals
-	if len(init_vals) == 0:
-		t1 = np.arange(len(x1))
-		t2 = np.arange(len(x2))
-		init_vals.extend([t1, x1, t2, x2])
+	# if len(init_vals) == 0:
+	# 	t1 = np.arange(len(x1))
+	# 	t2 = np.arange(len(x2))
+	# 	init_vals.extend([t1, x1, t2, x2])
 
-	#smoothing
-	if int(smooth_val) > 0:
-		x1 = smooth(x1, int(smooth_val))
-		x2 = smooth(x2, int(smooth_val))
+	# #smoothing
+	# if int(smooth_val) > 0:
+	# 	x1 = smooth(x1, int(smooth_val))
+	# 	x2 = smooth(x2, int(smooth_val))
 		
-		x1 = x1[1:(len(x1) - 1)]
-		x2 = x2[1:(len(x2) - 1)]
+	# 	x1 = x1[1:(len(x1) - 1)]
+	# 	x2 = x2[1:(len(x2) - 1)]
 
-	#baseline adjustment
-	if baseline_grabbed == 101: #midpoint
-		x1_mid = x1[int(len(x1)/2)]
-		x2_mid = x2[int(len(x2)/2)]
+	# #baseline adjustment
+	# if baseline_grabbed == 101: #midpoint
+	# 	x1_mid = x1[int(len(x1)/2)]
+	# 	x2_mid = x2[int(len(x2)/2)]
 
-		x1 = [i - x1_mid for i in x1]
-		x2 = [i - x2_mid for i in x2]
+	# 	x1 = [i - x1_mid for i in x1]
+	# 	x2 = [i - x2_mid for i in x2]
 
-	#low val (shifts all to y=0 for standard axis)
-	low_val = min(list(np.append(x1, x2)))
+	#######   END FOR LOOP   ###########
+	
 
-	x1 = [i-low_val for i in x1]
-	x2 = [i-low_val for i in x2]
+	#turns all 2d arrays into single 1d array
+	flattened_array = S[0]
+	for i in range(len(S)):
+		if i != 0:
+			flattened_array.extend(S[i])
+	
+	low_val = int(np.amin(flattened_array))
+
+	for i in range(number_of_strips):
+		S[i] = [j-low_val for j in S[i]]
+
+	# #low val (shifts all to y=0 for standard axis)
+	# low_val = min(list(np.append(x1, x2)))
+
+	# x1 = [i-low_val for i in x1]
+	# x2 = [i-low_val for i in x2]
+
+	
 	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
-	highest_intensity = max(list(np.append(x1, x2)))
+	highest_intensity = np.amax(flattened_array)
+	
+	peaks = []
+	control_peaks = []
+	
+	for i in range(number_of_strips):
+		for j in range(len(S[i])):
+			S[i][j] = round((float(S[i][j]) / float(highest_intensity)) * 100.00000, 2)
 
-	for i in range(len(x1)):
-		x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
-	for i in range(len(x2)):
-		x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
+	#peak adjustment
+	for i in range(number_of_strips):	
+		temp, _ = find_peaks(np.array(S[i]), height=15, distance=10, width=10)
+		peaks.append(temp)
+
+		peak = 0
+
+		for j in temp:
+			if S[i][j] > S[i][peak]:
+				peak = i
+
+		control_peaks.append(peak)
+
+	peak_max = np.amax(control_peaks)
+
+	t_is_empty = True
+	
+	if len(T) > 0:
+		t_is_empty = False
+
+	for i in range(number_of_strips):
+		t = np.arange(len(S[i]))
+
+		if control_peaks[i] < peak_max:
+			t = [x+peak_max-control_peaks[i] for x in t]
+		elif control_peaks[i] > peak_max:
+			t = [x+control_peaks[i]-peak_max for x in t]
+
+		t = [x + int(h_shift_val) for x in t]
+		S[i] = [x + int(v_shift_val) for x in S[i]]
+		if t_is_empty == True:
+			T.append(t)
+		else:
+			T[i] = t
+
+	# for i in range(len(x1)):
+	# 	x1[i] = round((float(x1[i]) / float(highest_intensity)) * 100.00000, 2)
+	# for i in range(len(x2)):
+	# 	x2[i] = round((float(x2[i]) / float(highest_intensity)) * 100.00000, 2)
 
 	#new auto peak detector for initial horizontal adjustment
-	x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
-	x2_peaks, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)
-
-	x1_peak = 0
-	x2_peak = 0
-
-	for i in x1_peaks:
-		if x1[i] > x1[x1_peak]:
-			x1_peak = i
-
-	for i in x2_peaks:
-		if x2[i] > x2[x2_peak]:
-			x2_peak = i
-
-	t1 = np.arange(len(x1))
-	t2 = np.arange(len(x2))
-
-	if x1_peak < x2_peak:
-		t1 = [i+x2_peak-x1_peak for i in t1]
 	
-	if x2_peak < x1_peak:
-		t2 = [i+x1_peak-x2_peak for i in t2]
+	# x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
+	# x2_peaks, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)	
 
-	#manual h and v shift 
-	t1 = [i+int(h_shift_val) for i in t1]
-	x1 = [i+int(v_shift_val) for i in x1]
+	# x1_peak = 0
+	# x2_peak = 0
+
+	# for i in x1_peaks:
+	# 	if x1[i] > x1[x1_peak]:	
+	# 		x1_peak = i
+
+	# for i in x2_peaks:
+	# 	if x2[i] > x2[x2_peak]:
+	# 		x2_peak = i
+
+	# t1 = np.arange(len(x1))
+	# t2 = np.arange(len(x2))
+
+	# if x1_peak < x2_peak:
+	# 	t1 = [i+x2_peak-x1_peak for i in t1]
+	
+	# if x2_peak < x1_peak:
+	# 	t2 = [i+x1_peak-x2_peak for i in t2]
+
+	# #manual h and v shift 
+	# t1 = [i+int(h_shift_val) for i in t1]
+	# x1 = [i+int(v_shift_val) for i in x1]
+	
+	# plotting_points = [sub[item] for item in range(len(T)) for sub in [S, T]]
+	# plotting_points = []
+	# print(len(S), len(T))
+	# for i in range(len(T)):
+	# 	plotting_points.append([S[i], T[i]])
 
 	#bounds selection
 	if bounds == True:
 		plt.clf()
 		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
-		plt.plot(t1, x1)
-		plt.plot(t2, x2)
+		plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
+		for i in range(len(S)):
+			plt.plot(T[i], S[i], linewidth=2)
 		clicked = plt.ginput(2)
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-		left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[0]))
-		right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-control_peak[1]))
-		points_right_peak = [left_point + t1[0], right_point + t1[0]]
+		left_point = min(range(len(T[0])), key=lambda i: abs(T[0][i]-control_peak[0]))
+		right_point = min(range(len(T[0])), key=lambda i: abs(T[0][i]-control_peak[1]))
+		points_right_peak = [left_point + T[0][0], right_point + T[0][0]]
 		plt.clf()
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
 			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
-			plt.plot(t1, x1)
-			plt.plot(t2, x2)
+			plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
+			for i in range(len(S)):
+				plt.plot(T[i], S[i], linewidth=2)
 			clicked = plt.ginput(2)
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
-			left_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[0]))
-			right_point = min(range(len(t1)), key=lambda i: abs(t1[i]-test_peak[1]))
-			points_left_peak = [left_point + t1[0], right_point + t1[0]]
+			left_point = min(range(len(T[0])), key=lambda i: abs(T[0][i]-test_peak[0]))
+			right_point = min(range(len(T[0])), key=lambda i: abs(T[0][i]-test_peak[1]))
+			points_left_peak = [left_point + T[0][0], right_point + T[0][0]]
 			plt.clf()
 	
 	#matplot plotting
 	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
 	ax = plt.subplot(111)
 
-	plt.plot(t1, x1, linewidth=2)
-	plt.plot(t2, x2, linewidth=2)
+	# plt.plot(plotting_points, linewidth=2)
+	for i in range(len(S)):
+		plt.plot(T[i], S[i], linewidth=2)
+		print([T[i], S[i]])
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -392,15 +537,23 @@ def make_graph(bounds = False):
 	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
 	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
 
+	plt.title(str(img_path).split('cropped/')[1], loc = 'right')
 	plt.ylabel('Rel. Int. (% max)', **hfont)
 	plt.xlabel('Pixel distance', **hfont)
 
 	plt.setp(ax.get_yticklabels(), fontweight="bold", fontname="Arial")
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
+	
+	plotting_points = []
+	print(len(S), len(T))
+	for i in range(len(T)):
+		plotting_points.append([S[i], T[i]])
+	vals.extend([plotting_points])
 
-	vals.extend([t1, x1, t2, x2])
-
-	plt.legend(['Top Strip', 'Bottom Strip'], frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
+	strip_legend = []
+	for i in range(number_of_strips):
+		strip_legend.extend(["Strip {}".format(i+1)])
+	plt.legend(strip_legend, frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
 
 	#resizing
 	figure = plt.gcf()
@@ -408,34 +561,51 @@ def make_graph(bounds = False):
 
 	#shading of area under curve
 	if bounds == True:
-		try:
-			t1 = t1.tolist()
-		except:
+		for i in range(number_of_strips):
 			try:
-				t2 = t2.tolist()
+				T[i] = T[i].tolist()
 			except:
 				pass
+		# try:
+		# 	t1 = t1.tolist()
+		# except:
+		# 	try:
+		# 		t2 = t2.tolist()
+		# 	except:
+		# 		pass
 		
 		print("Shading...")
 		
 		try:
-			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (1, 0, 0, 0.2))
-			plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0]) & (t2 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
+			for i in range(number_of_strips):
+				plt.fill_between(T[i], S[i], 0, where = (T[i] > points_right_peak[0]) & (T[i] <= points_right_peak[1]), color = (1, 0, 0, 0.2))
+				vals.extend([simps(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])), dx=0.01)])
+			for i in range(number_of_strips):
+				vals.extend([max(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])])
+			# plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (1, 0, 0, 0.2))
+			# plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0]) & (t2 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
 		
-			vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
-			vals.extend([simps(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])])), dx=0.01)])
-			vals.extend([max(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])]), max(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])]), points_right_peak[0], points_right_peak[1]])
+			# vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
+			# vals.extend([simps(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])])), dx=0.01)])
+
+			# vals.extend([max(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])]), max(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])]), points_right_peak[0], points_right_peak[1]])
+			print('worked')
 		except:
 			print("Invalid bounds on control peak")
 		
 		if peaks_num_grabbed == 102:
 			try:
-				plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0]) & (t1 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
-				plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0]) & (t2 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
+				for i in range(number_of_strips):
+					plt.fill_between(T[i], S[i], 0, where = (T[i] > points_left_peak[0]) & (T[i] <= points_left_peak[1]), color = (1, 0, 0, 0.2))
+					vals.extend([simps(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])), dx=0.01)])
+
+				# plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0]) & (t1 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
+				# plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0]) & (t2 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
 			
-				vals.extend([simps(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])])), dx=0.01)])
-				vals.extend([simps(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])])), dx=0.01)])
-				vals.extend([max(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])]), max(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])]), points_left_peak[0], points_left_peak[1]])
+				# vals.extend([simps(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])])), dx=0.01)])
+				# vals.extend([simps(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])])), dx=0.01)])
+				for i in range(number_of_strips):
+					vals.extend([max(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])])
 			except:
 				print("Invalid bounds on test peak")
 		
@@ -535,7 +705,7 @@ def save_graph():
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload, peak_num_choice
+	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload, peak_num_choice, strip_number
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -549,11 +719,19 @@ def init():
 	sub_middle_frame = Frame(middle_frame)
 	sub_middle_frame.pack(side="bottom", pady=(0,10))
 
-	#left side inputs
+	#LEFT SIDE
+	#help button
 	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(10,10))
 
+	#button for selecting image file to analyze
 	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,15))
 
+	#Number of strips to be analyzed
+	Label(left_frame, text="Enter number of strips to be analyzed: ").pack(anchor='n', pady=(0,0))
+	strip_number = Entry(left_frame)
+	strip_number.pack(anchor= 'n',pady=(0,15))
+
+	#slider for scaling the cropped image
 	Label(left_frame, text="Threshold and Crop", justify="center").pack()
 	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
 	threshold_slider.pack(padx=20, pady=(0,10))
@@ -583,7 +761,7 @@ def init():
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_peaks, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
 
-	#bottom row inputs
+	#building the bounds button, for selecting left and right bounds of target peaks
 	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)
 	bounds_button.pack(side="left", padx=(15,10), pady=(30,10))
 	bounds_button["state"] = "disable"
@@ -598,13 +776,14 @@ def init():
 	export_button.pack(side="left", padx=(10,0), pady=(30,10))
 	export_button["state"] = "disable"
 
-	#building the horizontal shift (used to shift one line left and right)
+	#RIGHT SIDE
+	#building the horizontal shift slider (used to shift one line left and right)
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
 	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
 	horizontal_shift_slider['state'] = 'disable'
 
-	#building the vertical shift (shifts one line up and down)
+	#building the vertical shift slider (shifts one line up and down)
 	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1)
 	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_v_shift)
 	vertical_shift_slider.grid(column=1, row=0)
