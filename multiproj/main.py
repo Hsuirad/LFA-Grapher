@@ -28,10 +28,10 @@ def is_number(n):
 			return True
 		return False
 
-		h_shift = StringVar()
-		horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-		horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
-		h_shift.trace('w', lambda *args:character_limit(h_shift))
+		# h_shift = StringVar()
+		# horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+		# horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
+		# h_shift.trace('w', lambda *args:character_limit(h_shift))
 
 #make GUI
 root = tkinter.Tk()
@@ -300,24 +300,18 @@ def make_graph(bounds = False):
 	export_button['state'] = 'normal'
 
 	#convert to numpy array
-	np_arrays_strips = []
-	
-	T = [] # capital to denote array
-	X = [] # capital to denote array
+	T = [] # array of all t-value lists
+	X = [] # array of all x-value lists
 	 
-
 	for i in range(number_of_strips):
-		temp = np.array(strips[i])
-		temp_array = []
+		np_strips = np.array(strips[i])
+		temp_a = []
 
-		for elem in temp:
-			if elem.sum() != 0:
-				temp_array.append(elem)
-				# print(elem)
-				# print('\nn\\n\n\n\n\nn\n\n')
-				# print(temp_array)
+		for strip in np_strips:
+			if strip.sum() != 0:
+				temp_a.append(strip)
 
-		X.append([float(sum(l))/len(l) for l in zip(*temp_array)])
+		X.append([float(sum(l))/len(l) for l in zip(*temp_a)])
 	
 	#initial values
 	if len(init_vals) == 0:
@@ -325,23 +319,36 @@ def make_graph(bounds = False):
 			T.append(np.arange(len(X[i])))
 			init_vals.extend([T[i], X[i]])
 
-	S = [] #smoothed x's
+	S = [] # smoothed x's
 
 	#smoothing	
 	if int(smooth_val) > 0:
 		for i in range(number_of_strips):
-			temp = smooth(X[i], int(smooth_val))
-			temp = temp[1:(len(temp) - 1)]
-			S.append(temp)
-	if int(smooth_val) <= 0:	
+			temp_b = smooth(X[i], int(smooth_val))
+			temp_b = temp_b[1:(len(temp_b) - 1)]
+			S.append(temp_b)
+	else:
 		S = X
 
+	#baseline adjustment
 	X_mids = []
 
 	if baseline_grabbed == 101:
 		for i in range(number_of_strips):
 			X_mids.append(S[i][int(len(S[i])/2)])
 			S[i] = [x - X_mids[i] for x in S[i]]
+
+	# flattened_array = S[0] 
+	# for i in range(len(S)):
+	# 	if i != 0:
+	# 		flattened_array.extend(S[i])
+
+	flattened_S = [j for sub in S for j in sub] # turns 2d array into single 1d array
+	
+	low_val = int(np.amin(flattened_S))
+
+	for i in range(number_of_strips):
+		S[i] = [j-low_val for j in S[i]]
 
 
 	#convert to numpy array
@@ -383,18 +390,6 @@ def make_graph(bounds = False):
 	# 	x2 = [i - x2_mid for i in x2]
 
 	#######   END FOR LOOP   ###########
-	
-
-	#turns all 2d arrays into single 1d array
-	flattened_array = S[0]
-	for i in range(len(S)):
-		if i != 0:
-			flattened_array.extend(S[i])
-	
-	low_val = int(np.amin(flattened_array))
-
-	for i in range(number_of_strips):
-		S[i] = [j-low_val for j in S[i]]
 
 	# #low val (shifts all to y=0 for standard axis)
 	# low_val = min(list(np.append(x1, x2)))
@@ -405,7 +400,7 @@ def make_graph(bounds = False):
 	
 	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
-	highest_intensity = np.amax(flattened_array)
+	highest_intensity = np.amax(flattened_S)
 	
 	peaks = []
 	control_peaks = []
@@ -444,7 +439,7 @@ def make_graph(bounds = False):
 
 		t = [x + int(h_shift_val) for x in t]
 		S[i] = [x + int(v_shift_val) for x in S[i]]
-		if t_is_empty == True:
+		if t_is_empty:
 			T.append(t)
 		else:
 			T[i] = t
