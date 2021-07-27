@@ -96,6 +96,7 @@ def help_window():
 	t.HighlightPattern("/\D{1,}[^:]:/g", "blue")
 	Button(window, text="OK", command=window.destroy).pack()
 
+#presents an error window in case of program error
 def error_window(error_message):
 	window = tkinter.Toplevel(root)
 	window.title("ERROR") 
