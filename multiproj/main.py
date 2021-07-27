@@ -195,6 +195,7 @@ def find_roi():
 		return
 
 	img_raw = cv2.imread(img_path)
+	img_raw = cv2.resize(img_raw, (1032, 688))
 
 	try:
 		number_of_strips = int(strip_number.get())
@@ -471,6 +472,7 @@ def make_graph(bounds = False):
 	# for i in range(len(T)):
 	# 	plotting_points.append([S[i], T[i]])
 
+
 	#bounds selection
 	if bounds == True:
 		plt.clf()
@@ -478,6 +480,7 @@ def make_graph(bounds = False):
 		plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
 		for i in range(len(S)):
 			plt.plot(T[i], S[i], linewidth=2)
+		plt.figure(figsize=(9,6))
 		clicked = plt.ginput(2)
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
@@ -492,6 +495,7 @@ def make_graph(bounds = False):
 			plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
 			for i in range(len(S)):
 				plt.plot(T[i], S[i], linewidth=2)
+			plt.figure(figsize=(9,6))
 			clicked = plt.ginput(2)
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
@@ -507,7 +511,7 @@ def make_graph(bounds = False):
 	# plt.plot(plotting_points, linewidth=2)
 	for i in range(len(S)):
 		plt.plot(T[i], S[i], linewidth=2)
-		print([T[i], S[i]])
+		#print([T[i], S[i]])
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
