@@ -13,6 +13,17 @@ from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Sc
 from shutil import rmtree
 import xlsxwriter
 
+#make GUI
+root = tkinter.Tk()
+root.title("Intensity Grapher")
+smooth_val = 0
+h_shift_val = 0
+v_shift_val = 0
+bounds = []
+
+#ratio is 3:2
+plot_disp_size = (int(430*1.5), 430)
+
 #character limits
 def character_limit(p):
 	if len(p.get()) > 6 or is_number(p.get()) == False:
@@ -32,17 +43,6 @@ def is_number(n):
 		# horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
 		# horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
 		# h_shift.trace('w', lambda *args:character_limit(h_shift))
-
-#make GUI
-root = tkinter.Tk()
-root.title("Intensity Grapher")
-smooth_val = 0
-h_shift_val = 0
-v_shift_val = 0
-bounds = []
-
-#ratio is 3:2
-plot_disp_size = (int(430*1.5), 430)
 
 #creates resource folder in the current directory
 if 'temp_resources' not in os.listdir('./'):
@@ -199,7 +199,6 @@ def find_roi():
 
 	try:
 		number_of_strips = int(strip_number.get())
-		print(number_of_strips)
 
 		roi_list = []
 
@@ -217,7 +216,9 @@ def find_roi():
 		cv2.destroyAllWindows()
 	except:
 		error_window("Strip number must be \nin integer format! \n(1, 2, 3, etc.)")
-
+	
+	preview_button['state'] = 'normal'
+	bounds_button['state'] = 'normal'
 
 #smoothing filter slider
 def update_smooth(val):
@@ -231,19 +232,19 @@ def smooth(interval, window_size):
 	window = np.ones(int(window_size))/float(window_size)
 	return np.convolve(interval, window, mode='valid')
 
-#updates after baseline selection
-def update_baseline():
-	preview_button["state"] = "normal"
+# #updates after baseline selection
+# def update_baseline():
+# 	#preview_button['state'] = 'normal'
 
-	global baseline_grabbed
-	baseline_grabbed = baseline_choice.get()
+# 	global baseline_grabbed
+# 	baseline_grabbed = baseline_choice.get()
 
-#updates after selecting number of peak bounds
-def update_peaks():
-	bounds_button['state'] = 'normal'
+# #updates after selecting number of peak bounds
+# def update_peaks():
+# 	#bounds_button['state'] = 'normal'
 
-	global peaks_num_grabbed
-	peaks_num_grabbed = peak_num_choice.get()
+# 	global peaks_num_grabbed
+# 	peaks_num_grabbed = peak_num_choice.get()
 
 #choosing peak bounds for integration step 
 def choose_peak_bounds():
@@ -272,6 +273,7 @@ def preview_graph():
 		os.remove('./temp_resources/temp.png')
 	except:
 		return
+
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
 	vertical_shift_slider['state'] = 'normal'
@@ -280,8 +282,6 @@ def preview_graph():
 def make_graph(bounds = False):
 	global vals
 	vals = []
-
-	print(number_of_strips)
 
 	#in case matplotlib crashes
 	plt.clf()
@@ -333,7 +333,7 @@ def make_graph(bounds = False):
 	#baseline adjustment
 	X_mids = []
 
-	if baseline_grabbed == 101:
+	if baseline_choice.get() == 101:
 		for i in range(number_of_strips):
 			X_mids.append(S[i][int(len(S[i])/2)])
 			S[i] = [x - X_mids[i] for x in S[i]]
@@ -408,9 +408,11 @@ def make_graph(bounds = False):
 
 	#peak detection and adjustment
 	for i in range(number_of_strips):	
-		peak_indices, _ = find_peaks(np.array(S[i]), height=15, distance=10, width=10)
+		peak_indices, _ = find_peaks(np.array(S[i]), prominence=5, distance=10, width=5)
 
 		index = 0
+
+		print("STRIP {} PEAKS".format(i+1), peak_indices, [S[i][j] for j in peak_indices])
 
 		for j in peak_indices:
 			if S[i][j] > S[i][index]:
@@ -426,6 +428,7 @@ def make_graph(bounds = False):
 		t = np.arange(len(S[i]))
 		t = [j+max_index-control_peak_indices[i] for j in t]
 		T.append(t)
+
 
 	# t = [j+int(h_shift_val) for j in t]
 	# S[i] = [j+int(v_shift_val) for j in S[i]]
@@ -472,15 +475,13 @@ def make_graph(bounds = False):
 	# for i in range(len(T)):
 	# 	plotting_points.append([S[i], T[i]])
 
-
 	#bounds selection
 	if bounds == True:
 		plt.clf()
-		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
-		plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
-		for i in range(len(S)):
-			plt.plot(T[i], S[i], linewidth=2)
+		plt.title("Select left and right bounds of Control Peak (right)")
 		plt.figure(figsize=(9,6))
+		for i in range(number_of_strips):
+			plt.plot(T[i], S[i], linewidth=2)
 		clicked = plt.ginput(2)
 		plt.close()
 		control_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
@@ -489,13 +490,12 @@ def make_graph(bounds = False):
 		points_right_peak = [left_point + T[0][0], right_point + T[0][0]]
 		plt.clf()
 
-		if peaks_num_grabbed == 102:
+		if peak_num_choice.get() == 102:
 			plt.clf()
-			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
-			plotting_points = [sub[item] for item in range(len(T)) for sub in [T, S]]
-			for i in range(len(S)):
-				plt.plot(T[i], S[i], linewidth=2)
+			plt.title("Select left and right bounds of Test Peak (left)")
 			plt.figure(figsize=(9,6))
+			for i in range(number_of_strips):
+				plt.plot(T[i], S[i], linewidth=2)
 			clicked = plt.ginput(2)
 			plt.close()
 			test_peak = [math.floor(float(str(clicked).split(', ')[0][2:])), math.ceil(float(str(clicked).split(', ')[2][1:]))]
@@ -530,11 +530,9 @@ def make_graph(bounds = False):
 	plt.setp(ax.get_yticklabels(), fontweight="bold", fontname="Arial")
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
 	
-	plotting_points = []
-	print(len(S), len(T))
-	for i in range(len(T)):
-		plotting_points.append([S[i], T[i]])
-	vals.extend([plotting_points])
+	print(len(S), len(T), "\n")
+	for i in range(number_of_strips):
+		vals.extend([S[i], T[i]])
 
 	strip_legend = []
 	for i in range(number_of_strips):
@@ -552,13 +550,6 @@ def make_graph(bounds = False):
 				T[i] = T[i].tolist()
 			except:
 				pass
-		# try:
-		# 	t1 = t1.tolist()
-		# except:
-		# 	try:
-		# 		t2 = t2.tolist()
-		# 	except:
-		# 		pass
 		
 		print("Shading...")
 		
@@ -568,18 +559,16 @@ def make_graph(bounds = False):
 				vals.extend([simps(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])), dx=0.01)])
 			for i in range(number_of_strips):
 				vals.extend([max(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])])
-			# plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (1, 0, 0, 0.2))
-			# plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0]) & (t2 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
 		
 			# vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
 			# vals.extend([simps(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])])), dx=0.01)])
-
 			# vals.extend([max(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])]), max(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])]), points_right_peak[0], points_right_peak[1]])
-			print('worked')
+			
+			print('Worked Control Peak')
 		except:
 			print("Invalid bounds on control peak")
 		
-		if peaks_num_grabbed == 102:
+		if peak_num_choice.get() == 102:
 			try:
 				for i in range(number_of_strips):
 					plt.fill_between(T[i], S[i], 0, where = (T[i] > points_left_peak[0]) & (T[i] <= points_left_peak[1]), color = (1, 0, 0, 0.2))
@@ -592,6 +581,7 @@ def make_graph(bounds = False):
 				# vals.extend([simps(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])])), dx=0.01)])
 				for i in range(number_of_strips):
 					vals.extend([max(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])])
+				print('Worked Test Peak')
 			except:
 				print("Invalid bounds on test peak")
 		
@@ -733,19 +723,19 @@ def init():
 
 	#determines whether the baselining will happen from the lowest value (from both curves lowest val is zeroed) or midpoint (average value of both is zeroed and then lowest value brought to zero)
 	baseline_choice = tkinter.IntVar()
-	baseline_choice.set(1)
+	baseline_choice.set(101)
 	modes = [("Midpoint", 101), ("Lowest Value", 102)]
 	Label(left_frame, text="Baseline from:", justify="left", padx=20).pack()
 	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_baseline, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
+		Radiobutton(left_frame, text=mode, indicatoron=1, justify="left", padx=20,  variable=baseline_choice, value=val).pack(anchor='w')
 
 	#a multiple choice field for how many peaks you want analyzed at the current moment
 	peak_num_choice = tkinter.IntVar()
-	peak_num_choice.set(1)
+	peak_num_choice.set(101)
 	modes = [("One Peak", 101), ("Two Peaks", 102)]
 	Label(left_frame, text="How many peaks to compare:", justify="left", padx=20).pack(pady=(20,0))
 	for mode, val in modes:
-		Radiobutton(left_frame, text=mode, indicatoron=1, command=update_peaks, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
+		Radiobutton(left_frame, text=mode, indicatoron=1, justify="left", padx=20,  variable=peak_num_choice, value=val).pack(anchor='w')
 
 	#building the bounds button, for selecting left and right bounds of target peaks
 	bounds_button = Button(left_frame, text="Choose Bounds", command=choose_peak_bounds)

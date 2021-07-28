@@ -164,6 +164,7 @@ def find_roi():
 		return
 
 	img_raw = cv2.imread(img_path)
+	img_raw = cv2.resize(img_raw, (1032, 688))
 	
 	#select ROI function 1 (top strip)
 	roi = cv2.selectROI(img_raw)
@@ -339,6 +340,7 @@ def make_graph(bounds = False):
 	#bounds selection
 	if bounds == True:
 		plt.clf()
+		plt.figure(figsize=(9,5.5))
 		plt.title("Select LEFT and RIGHT BOUNDS of CONTROL PEAK (right)")
 		plt.plot(t1, x1)
 		plt.plot(t2, x2)
@@ -352,6 +354,7 @@ def make_graph(bounds = False):
 
 		if peaks_num_grabbed == 102:
 			plt.clf()
+			plt.figure(figsize=(9,5.5))
 			plt.title("Select LEFT and RIGHT BOUNDS of TEST PEAK (left)")
 			plt.plot(t1, x1)
 			plt.plot(t2, x2)
@@ -408,7 +411,7 @@ def make_graph(bounds = False):
 		print("Shading...")
 		
 		try:
-			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (1, 0, 0, 0.2))
+			plt.fill_between(t1, x1, 0, where = (t1 > points_right_peak[0]) & (t1 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
 			plt.fill_between(t2, x2, 0, where = (t2 > points_right_peak[0]) & (t2 <= points_right_peak[1]), color = (0, 0, 1, 0.2))
 		
 			vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
