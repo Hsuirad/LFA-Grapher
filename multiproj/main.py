@@ -112,7 +112,7 @@ def select_file():
 	try:
 		img_path = root.filename
 	except:
-		print("Root Filename not compatible with image path")
+		error_window("Root filename not \ncompatible with image path")
 		return
 
 	global im
@@ -134,7 +134,7 @@ def thresh_and_crop():
 	try:
 		img_path = root.filename
 	except:
-		print("Root Filename not compatible with image path")
+		error_window("Root filename not \ncompatible with image path")
 		return
 
 	#thresholding
@@ -187,15 +187,15 @@ def find_roi():
 		global img_path
 		img_path = './temp_resources/cropped/' + os.path.split(root.filename)[1]
 	except:
-		print("Image path not defined")
+		error_window("Image path not defined")
 		return
 	
-	if os.path.exists(img_path) == False:
-		print("Must threshold image first")
+	try:
+		img_raw = cv2.imread(img_path)
+		img_raw = cv2.resize(img_raw, (1032, 688))
+	except:
+		error_window("Must threshold image first")
 		return
-
-	img_raw = cv2.imread(img_path)
-	img_raw = cv2.resize(img_raw, (1032, 688))
 
 	try:
 		number_of_strips = int(strip_number.get())
@@ -212,10 +212,13 @@ def find_roi():
 				cv2.imwrite('./temp_resources/strip_{}.jpeg'.format(i+1), roi_list[i])
 		except:
 			print("No ROI selected")
+			cv2.destroyAllWindows()
+			return
 
 		cv2.destroyAllWindows()
 	except:
 		error_window("Strip number must be \nin integer format! \n(1, 2, 3, etc.)")
+		return
 	
 	preview_button['state'] = 'normal'
 	bounds_button['state'] = 'normal'
@@ -291,11 +294,8 @@ def make_graph(bounds = False):
 	try:	
 		for i in range(number_of_strips):
 			strips.append(Image.open('./temp_resources/strip_{}.jpeg'.format(i+1)).convert("L"))
-
-		# top_line = Image.open('./temp_resources/topstrip.jpeg').convert("L")
-		# bottom_line = Image.open('./temp_resources/bottomstrip.jpeg').convert("L")
 	except:
-		print("No ROI selected")
+		error_window("No ROI selected")
 		return
 	
 	#special treatment for this disaster
@@ -478,8 +478,8 @@ def make_graph(bounds = False):
 	#bounds selection
 	if bounds == True:
 		plt.clf()
+		plt.figure(figsize=(9.5,5))
 		plt.title("Select left and right bounds of Control Peak (right)")
-		plt.figure(figsize=(9,6))
 		for i in range(number_of_strips):
 			plt.plot(T[i], S[i], linewidth=2)
 		clicked = plt.ginput(2)
@@ -492,8 +492,8 @@ def make_graph(bounds = False):
 
 		if peak_num_choice.get() == 102:
 			plt.clf()
+			plt.figure(figsize=(9.5,5))
 			plt.title("Select left and right bounds of Test Peak (left)")
-			plt.figure(figsize=(9,6))
 			for i in range(number_of_strips):
 				plt.plot(T[i], S[i], linewidth=2)
 			clicked = plt.ginput(2)
@@ -555,35 +555,24 @@ def make_graph(bounds = False):
 		
 		try:
 			for i in range(number_of_strips):
-				plt.fill_between(T[i], S[i], 0, where = (T[i] > points_right_peak[0]) & (T[i] <= points_right_peak[1]), color = (1, 0, 0, 0.2))
+				plt.fill_between(T[i], S[i], 0, where = (T[i] > points_right_peak[0]) & (T[i] <= points_right_peak[1]), color = (0, 0, 1, 0.15))
 				vals.extend([simps(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])), dx=0.01)])
 			for i in range(number_of_strips):
 				vals.extend([max(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])])
-		
-			# vals.extend([simps(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])])), dx=0.01)])
-			# vals.extend([simps(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])])), dx=0.01)])
-			# vals.extend([max(x1[t1.index(points_right_peak[0]):t1.index(points_right_peak[1])]), max(x2[t2.index(points_right_peak[0]):t2.index(points_right_peak[1])]), points_right_peak[0], points_right_peak[1]])
-			
 			print('Worked Control Peak')
 		except:
-			print("Invalid bounds on control peak")
+			error_window("Invalid bounds on control peak")
 		
 		if peak_num_choice.get() == 102:
 			try:
 				for i in range(number_of_strips):
-					plt.fill_between(T[i], S[i], 0, where = (T[i] > points_left_peak[0]) & (T[i] <= points_left_peak[1]), color = (1, 0, 0, 0.2))
+					plt.fill_between(T[i], S[i], 0, where = (T[i] > points_left_peak[0]) & (T[i] <= points_left_peak[1]), color = (1, 0, 0, 0.15))
 					vals.extend([simps(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])), dx=0.01)])
-
-				# plt.fill_between(t1, x1, 0, where = (t1 > points_left_peak[0]) & (t1 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
-				# plt.fill_between(t2, x2, 0, where = (t2 > points_left_peak[0]) & (t2 <= points_left_peak[1]), color = (1, 0, 0, 0.2))
-			
-				# vals.extend([simps(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x1[t1.index(points_left_peak[0]):t1.index(points_left_peak[1])])), dx=0.01)])
-				# vals.extend([simps(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(x2[t2.index(points_left_peak[0]):t2.index(points_left_peak[1])])), dx=0.01)])
 				for i in range(number_of_strips):
 					vals.extend([max(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])])
 				print('Worked Test Peak')
 			except:
-				print("Invalid bounds on test peak")
+				error_window("Invalid bounds on test peak")
 		
 	global im
 	plt.savefig('./temp_resources/temp.png', bbox_inches='tight')
