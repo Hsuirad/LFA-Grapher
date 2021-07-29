@@ -9,7 +9,7 @@ from scipy.signal import find_peaks
 import math
 import re
 from matplotlib.ticker import (AutoMinorLocator)
-from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, PhotoImage, Label, Scale, Entry, StringVar
+from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, Label, Scale, Entry, OptionMenu
 from shutil import rmtree
 import xlsxwriter
 
@@ -100,14 +100,13 @@ def help_window():
 def error_window(error_message):
 	window = tkinter.Toplevel(root)
 	window.title("ERROR") 
-	window.geometry("300x250")
-	text = error_message
-	t = Label(window, text=text, width=100, height=10, borderwidth=2).pack()
-	Button(window, text="OK", command=window.destroy).pack()
+	window.geometry("250x150")
+	Label(window, text=error_message, width=50, height=8, borderwidth=1).pack()
+	Button(window, text="OK", width=5, command=window.destroy).pack()
 
 #opens dialog to select image
 def select_file():
-	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png)", "*.jpg *.jpeg *.png"), ("all files","*.*")))
+	root.filename = filedialog.askopenfilename(initialdir="../", title="Select image file", filetypes=(("Image files (.jpg, .jpeg, .png, .tif, .tiff)", "*.jpg *.jpeg *.png, .*tif, *.tiff"), ("all files","*.*")))
 
 	try:
 		img_path = root.filename
@@ -128,8 +127,6 @@ def update_thresh(val):
 
 #image processing
 def thresh_and_crop():
-	global init_vals
-	init_vals = []
 
 	try:
 		img_path = root.filename
@@ -315,12 +312,11 @@ def make_graph(bounds = False):
 		X.append([float(sum(l))/len(l) for l in zip(*temp_a)])
 	
 	#initial values
-	if len(init_vals) == 0:
-		for i in range(number_of_strips):
-			init_vals.extend([np.arange(len(X[i])), X[i]])
+	for i in range(number_of_strips):
+		vals.extend([np.arange(len(X[i])), X[i]])
 
 	S = [] # smoothed x's
-
+ 
 	#smoothing	
 	if int(smooth_val) > 0:
 		for i in range(number_of_strips):
@@ -338,64 +334,12 @@ def make_graph(bounds = False):
 			X_mids.append(S[i][int(len(S[i])/2)])
 			S[i] = [x - X_mids[i] for x in S[i]]
 
-	# flattened_array = S[0] 
-	# for i in range(len(S)):
-	# 	if i != 0:
-	# 		flattened_array.extend(S[i])
-
 	flattened_S = [j for sub in S for j in sub] # turns 2d array into single 1d array
 	
 	low_val = min(flattened_S)
 
 	for i in range(number_of_strips):
 		S[i] = [j-low_val for j in S[i]]
-
-	#convert to numpy array
-	# np_top = np.array(top_line)
-	# top_line_array = []
-	# for elem in np_top:
-	# 	if elem.sum() != 0:
-	# 		top_line_array.append(elem)
-			
-	# np_bottom = np.array(bottom_line)
-	# bottom_line_array = []
-	# for elem in np_bottom:
-	# 	if elem.sum() != 0:
-	# 		bottom_line_array.append(elem)
-
-	# x1 = [float(sum(l))/len(l) for l in zip(*top_line_array)]
-	# x2 = [float(sum(l))/len(l) for l in zip(*bottom_line_array)]
-
-	#initial vals
-	# if len(init_vals) == 0:
-	# 	t1 = np.arange(len(x1))
-	# 	t2 = np.arange(len(x2))
-	# 	init_vals.extend([t1, x1, t2, x2])
-
-	# #smoothing
-	# if int(smooth_val) > 0:
-	# 	x1 = smooth(x1, int(smooth_val))
-	# 	x2 = smooth(x2, int(smooth_val))
-		
-	# 	x1 = x1[1:(len(x1) - 1)]
-	# 	x2 = x2[1:(len(x2) - 1)]
-
-	# #baseline adjustment
-	# if baseline_grabbed == 101: #midpoint
-	# 	x1_mid = x1[int(len(x1)/2)]
-	# 	x2_mid = x2[int(len(x2)/2)]
-
-	# 	x1 = [i - x1_mid for i in x1]
-	# 	x2 = [i - x2_mid for i in x2]
-
-	#######   END FOR LOOP   ###########
-
-	# #low val (shifts all to y=0 for standard axis)
-	# low_val = min(list(np.append(x1, x2)))
-
-	# x1 = [i-low_val for i in x1]
-	# x2 = [i-low_val for i in x2]
-
 	
 	#converts values to percentages of max intensity to nearest hundredth (to make uniform across pictures)
 	high_val = max(flattened_S)
@@ -408,7 +352,7 @@ def make_graph(bounds = False):
 
 	#peak detection and adjustment
 	for i in range(number_of_strips):	
-		peak_indices, _ = find_peaks(np.array(S[i]), prominence=5, distance=10, width=5)
+		peak_indices, _ = find_peaks(np.array(S[i]), prominence=5, distance=10, width=3)
 
 		index = 0
 
@@ -434,40 +378,6 @@ def make_graph(bounds = False):
 	# S[i] = [j+int(v_shift_val) for j in S[i]]
 
 ####################################################################################
-
-	# for i in range(len(x1)):
-	# 	x1[i] = round((float(x1[i]) / float(high_val)) * 100.00000, 2)
-	# for i in range(len(x2)):
-	# 	x2[i] = round((float(x2[i]) / float(high_val)) * 100.00000, 2)
-
-	#new auto peak detector for initial horizontal adjustment
-	
-	# x1_peaks, _ = find_peaks(np.array(x1), height=15, distance=10, width=10)
-	# x2_peaks, _ = find_peaks(np.array(x2), height=15, distance=10, width=10)	
-
-	# x1_peak = 0
-	# x2_peak = 0
-
-	# for i in x1_peaks:
-	# 	if x1[i] > x1[x1_peak]:	
-	# 		x1_peak = i
-
-	# for i in x2_peaks:
-	# 	if x2[i] > x2[x2_peak]:
-	# 		x2_peak = i
-
-	# t1 = np.arange(len(x1))
-	# t2 = np.arange(len(x2))
-
-	# if x1_peak < x2_peak:
-	# 	t1 = [i+x2_peak-x1_peak for i in t1]
-	
-	# if x2_peak < x1_peak:
-	# 	t2 = [i+x1_peak-x2_peak for i in t2]
-
-	# #manual h and v shift 
-	# t1 = [i+int(h_shift_val) for i in t1]
-	# x1 = [i+int(v_shift_val) for i in x1]
 	
 	# plotting_points = [sub[item] for item in range(len(T)) for sub in [S, T]]
 	# plotting_points = []
@@ -505,13 +415,12 @@ def make_graph(bounds = False):
 			plt.clf()
 	
 	#matplot plotting
-	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 45}
+	hfont = {'fontname': 'Arial', 'weight': 'bold', 'size': 35}
 	ax = plt.subplot(111)
 
 	# plt.plot(plotting_points, linewidth=2)
 	for i in range(len(S)):
 		plt.plot(T[i], S[i], linewidth=2)
-		#print([T[i], S[i]])
 	ax.tick_params(width=1)
 	ax.spines['right'].set_visible(False)
 	ax.spines['top'].set_visible(False)
@@ -525,19 +434,19 @@ def make_graph(bounds = False):
 
 	plt.title(str(img_path).split('cropped/')[1], loc = 'right')
 	plt.ylabel('Rel. Int. (% max)', **hfont)
-	plt.xlabel('Pixel distance', **hfont)
+	plt.xlabel('Pixel Distance', **hfont)
 
 	plt.setp(ax.get_yticklabels(), fontweight="bold", fontname="Arial")
 	plt.setp(ax.get_xticklabels(), fontweight="bold", fontname="Arial")
 	
 	print(len(S), len(T), "\n")
 	for i in range(number_of_strips):
-		vals.extend([S[i], T[i]])
+		vals.extend([T[i], S[i]])
 
 	strip_legend = []
 	for i in range(number_of_strips):
 		strip_legend.extend(["Strip {}".format(i+1)])
-	plt.legend(strip_legend, frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 32})
+	plt.legend(strip_legend, frameon=False, prop={'family': 'Arial', 'weight': 'bold', 'size': 25})
 
 	#resizing
 	figure = plt.gcf()
@@ -559,6 +468,7 @@ def make_graph(bounds = False):
 				vals.extend([simps(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])], np.linspace(points_right_peak[0], points_right_peak[1], num=len(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])), dx=0.01)])
 			for i in range(number_of_strips):
 				vals.extend([max(S[i][T[i].index(points_right_peak[0]):T[i].index(points_right_peak[1])])])
+			vals.extend(['Bounds: ({}, {})'.format(points_right_peak[0], points_right_peak[1])])
 			print('Worked Control Peak')
 		except:
 			error_window("Invalid bounds on control peak")
@@ -570,10 +480,11 @@ def make_graph(bounds = False):
 					vals.extend([simps(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])], np.linspace(points_left_peak[0], points_left_peak[1], num=len(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])), dx=0.01)])
 				for i in range(number_of_strips):
 					vals.extend([max(S[i][T[i].index(points_left_peak[0]):T[i].index(points_left_peak[1])])])
+				vals.extend(['Bounds: ({}, {})'.format(points_left_peak[0], points_left_peak[1])])
 				print('Worked Test Peak')
 			except:
 				error_window("Invalid bounds on test peak")
-		
+
 	global im
 	plt.savefig('./temp_resources/temp.png', bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('./temp_resources/temp.png').resize(plot_disp_size))
@@ -584,81 +495,51 @@ def save_graph():
 	f = filedialog.askdirectory(initialdir='../', title='Choose Location to Save Data')
 	if f:
 		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
-		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
-		worksheet = workbook.add_worksheet()
+		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_multiprojDATA.xlsx')
+		worksheet1 = workbook.add_worksheet('Calculations')
+		worksheet2 = workbook.add_worksheet('Initial Values')
+		worksheet3 = workbook.add_worksheet('Adjusted Values')
+
 		#adds a bold format to use to highlight cells
 		bold = workbook.add_format({'bold': True})
 
-		#initialize the top row labels, all with bold text
-		worksheet.write('A1', 'Top Strip X-values (initial)', bold)
-		worksheet.write('B1', 'Top Strip Y-values (initial)', bold)
-		worksheet.write('C1', 'Bottom Strip X-values (initial)', bold)
-		worksheet.write('D1', 'Bottom Strip Y-Values (initial)', bold)
-		worksheet.write('E1', 'Top Strip X-values (adjusted)', bold)
-		worksheet.write('F1', 'Top Strip Y-values (adjusted)', bold)
-		worksheet.write('G1', 'Bottom Strip X-values (adjusted)', bold)
-		worksheet.write('H1', 'Bottom Strip Y-Values (adjusted)', bold)
-		worksheet.write('I1', 'Area of control (right) peak - Top Strip', bold)
-		worksheet.write('J1', 'Area of control (right) peak - Bottom Strip', bold)
-		worksheet.write('K1', 'Area of test (left) peak - Top Strip', bold)
-		worksheet.write('L1', 'Area of test (left) peak - Bottom Strip', bold)
-		worksheet.write('I3', 'Max of control (right) peak - Top Strip', bold)
-		worksheet.write('J3', 'Max of control (right) peak - Bottom Strip', bold)
-		worksheet.write('K3', 'Max of test (left) peak - Top Strip', bold)
-		worksheet.write('L3', 'Max of test (left) peak - Bottom Strip', bold)
-		worksheet.write('I5', 'Left bound of control (right) peak', bold)
-		worksheet.write('J5', 'Right bound of control (right) peak', bold)
-		worksheet.write('K5', 'Left bound of test (left) peak', bold)
-		worksheet.write('L5', 'Right bound of test (left) peak', bold)
+		#initial values sheet
+		for i in range(number_of_strips):
+			worksheet2.write(0, i*2, 'Strip {} X-values'.format(i+1), bold)
+			worksheet2.write_column(1, i*2, vals.pop(0))
+			worksheet2.write(0, i*2+1, 'Strip {} Y-values'.format(i+1), bold)
+			worksheet2.write_column(1, i*2+1, vals.pop(0))
+		worksheet2.set_column(0, number_of_strips*2-1, 13.15)
 
-		worksheet.set_column('A:A', 22) #these are widths of columns in cm of excel, just to make it more readable
-		worksheet.set_column('B:B', 22)
-		worksheet.set_column('C:C', 25)
-		worksheet.set_column('D:D', 25)
-		worksheet.set_column('E:E', 25)
-		worksheet.set_column('F:F', 25)
-		worksheet.set_column('G:G', 28)
-		worksheet.set_column('H:H', 28)
-		worksheet.set_column('I:I', 32)
-		worksheet.set_column('J:J', 36)
-		worksheet.set_column('K:K', 30)
-		worksheet.set_column('L:L', 34)
+		#adjusted values sheet
+		for i in range(number_of_strips):
+			worksheet3.write(0, i*2, 'Strip {} X-values'.format(i+1), bold)
+			worksheet3.write_column(1, i*2, vals.pop(0))
+			worksheet3.write(0, i*2+1, 'Strip {} Y-values'.format(i+1), bold)
+			worksheet3.write_column(1, i*2+1, vals.pop(0))
+		worksheet3.set_column(0, number_of_strips*2-1, 13.15)
 
-		for i in range(len(init_vals[0])):
-			worksheet.write('A'+str(i+2), init_vals[0][i])
-			worksheet.write('B'+str(i+2), init_vals[1][i])
+		#calculations sheet
+		worksheet1.write(1, 0, 'Control Peak', bold)
+		worksheet1.write(3, 0, 'Test Peak', bold)
+		worksheet1.write_column(1, 1, ['Area', 'Max Value', 'Area', 'Max Value'])
+		for i in range(number_of_strips):
+			worksheet1.write(0, i+2, 'Strip {}'.format(i+1), bold)
+		
+		level = 1
+		while len(vals) != 0:
+			worksheet1.write_row(level, 2, vals[:number_of_strips])
+			del vals[:number_of_strips]
+			worksheet1.write_row(level+1, 2, vals[:number_of_strips])
+			del vals[:number_of_strips]
+			worksheet1.write(level+1, 0, vals.pop(0))
+			level+=2
+		worksheet1.set_column('A:A', 16)
+		worksheet1.set_column('B:B', 9)
+		worksheet1.set_column(2, number_of_strips+2, 11.25)
 
-		for i in range(len(init_vals[2])):
-			worksheet.write('C'+str(i+2), init_vals[2][i])
-			worksheet.write('D'+str(i+2), init_vals[3][i])
-
-		for i in range(len(vals[0])):
-			worksheet.write('E'+str(i+2), vals[0][i])
-			worksheet.write('F'+str(i+2), vals[1][i])
-
-		for i in range(len(vals[2])):
-			worksheet.write('G'+str(i+2), vals[2][i])
-			worksheet.write('H'+str(i+2), vals[3][i])
-
-		if len(vals) >= 6:
-			worksheet.write('I2', vals[4])
-			worksheet.write('J2', vals[5])
-			worksheet.write('I4', vals[6])
-			worksheet.write('J4', vals[7])
-			worksheet.write('I6', vals[8])
-			worksheet.write('J6', vals[9])
-
-		if len(vals) >= 12:
-			worksheet.write('K2', vals[10])
-			worksheet.write('L2', vals[11])
-			worksheet.write('K4', vals[12])
-			worksheet.write('L4', vals[13])
-			worksheet.write('K6', vals[14])
-			worksheet.write('L6', vals[15])
-
-		#inserts cropped ROI image
-		worksheet.insert_image('J8', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
-		worksheet.insert_image('J27', img_path, {'x_scale': 0.40, 'y_scale': 0.40})	
+		worksheet1.insert_image('A7', f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', {'x_scale': 0.40, 'y_scale': 0.40})	
+		worksheet1.insert_image('A26', img_path, {'x_scale': 0.45, 'y_scale': 0.45})
 
 		workbook.close()
 		
@@ -720,7 +601,7 @@ def init():
 
 	#a multiple choice field for how many peaks you want analyzed at the current moment
 	peak_num_choice = tkinter.IntVar()
-	peak_num_choice.set(101)
+	peak_num_choice.set(102)
 	modes = [("One Peak", 101), ("Two Peaks", 102)]
 	Label(left_frame, text="How many peaks to compare:", justify="left", padx=20).pack(pady=(20,0))
 	for mode, val in modes:
