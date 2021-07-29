@@ -9,7 +9,7 @@ from scipy.signal import find_peaks
 import math
 import re
 from matplotlib.ticker import (AutoMinorLocator)
-from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, Label, Scale, Entry, OptionMenu
+from tkinter import Text, Radiobutton, Frame, Button, filedialog, messagebox, Scale, Canvas, Label, Scale, Entry, OptionMenu, StringVar
 from shutil import rmtree
 import xlsxwriter
 
@@ -232,20 +232,6 @@ def smooth(interval, window_size):
 	window = np.ones(int(window_size))/float(window_size)
 	return np.convolve(interval, window, mode='valid')
 
-# #updates after baseline selection
-# def update_baseline():
-# 	#preview_button['state'] = 'normal'
-
-# 	global baseline_grabbed
-# 	baseline_grabbed = baseline_choice.get()
-
-# #updates after selecting number of peak bounds
-# def update_peaks():
-# 	#bounds_button['state'] = 'normal'
-
-# 	global peaks_num_grabbed
-# 	peaks_num_grabbed = peak_num_choice.get()
-
 #choosing peak bounds for integration step 
 def choose_peak_bounds():
 	global bounds
@@ -294,6 +280,15 @@ def make_graph(bounds = False):
 	except:
 		error_window("No ROI selected")
 		return
+
+	# #dropdown menu selection for manual shifting
+	# options = []
+	# for i in range(number_of_strips):
+	# 	options.extend(['Strip {}'.format(i+1)])
+	# strip_selection = StringVar()
+	# strip_selection.set(options[0])
+	# w = OptionMenu(Frame(root), strip_selection, *options)
+	# w.pack()
 	
 	#special treatment for this disaster
 	export_button['state'] = 'normal'
@@ -373,17 +368,10 @@ def make_graph(bounds = False):
 		t = [j+max_index-control_peak_indices[i] for j in t]
 		T.append(t)
 
-
-	# t = [j+int(h_shift_val) for j in t]
-	# S[i] = [j+int(v_shift_val) for j in S[i]]
-
-####################################################################################
-	
-	# plotting_points = [sub[item] for item in range(len(T)) for sub in [S, T]]
-	# plotting_points = []
-	# print(len(S), len(T))
-	# for i in range(len(T)):
-	# 	plotting_points.append([S[i], T[i]])
+	#manual h and v shift
+	strip_number = int(strip_selection.get().split(' ')[1])
+	T[strip_number-1] = [i+int(h_shift_val) for i in T[strip_number-1]]
+	S[strip_number-1] = [i+int(v_shift_val) for i in S[strip_number-1]]
 
 	#bounds selection
 	if bounds == True:
@@ -551,7 +539,7 @@ def save_graph():
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, im, imload, peak_num_choice, strip_number
+	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, strip_selection, im, imload, peak_num_choice, strip_number
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -623,6 +611,15 @@ def init():
 	export_button["state"] = "disable"
 
 	#RIGHT SIDE
+	#dropdown menu selection for manual shifting
+	options = []
+	for i in range(10):
+		options.extend(['Strip {}'.format(i+1)])
+	strip_selection = StringVar()
+	strip_selection.set(options[0])
+	w = OptionMenu(middle_frame, strip_selection, *options)
+	w.pack()
+
 	#building the horizontal shift slider (used to shift one line left and right)
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
 	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
