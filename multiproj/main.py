@@ -15,14 +15,23 @@ import xlsxwriter
 
 #make GUI
 root = tkinter.Tk()
-root.title("Intensity Grapher")
+root.title("LFAGrapher")
 smooth_val = 0
-h_shift_val = 0
-v_shift_val = 0
+number_of_strips = 0
+shift_vals = []
 bounds = []
 
 #ratio is 3:2
 plot_disp_size = (int(430*1.5), 430)
+
+#validates strip number entry
+def validate(e):
+	if e.isdigit() and int(e) > 0 and len(e) < 3:
+		return True
+	elif e == "":
+		return True
+	else:
+		return False
 
 #character limits
 def character_limit(p):
@@ -178,7 +187,7 @@ def thresh_and_crop():
 
 #finding regions of interest
 def find_roi():
-	global number_of_strips
+	global number_of_strips 
 
 	try:
 		global img_path
@@ -225,7 +234,6 @@ def update_smooth(val):
 	global smooth_val
 	smooth_val = val
 	make_graph()
-	os.remove('./temp_resources/temp.png')
 
 #curve smoothing
 def smooth(interval, window_size):
@@ -240,25 +248,17 @@ def choose_peak_bounds():
 
 #horizontal shift slider
 def update_h_shift(val):
-	global h_shift_val
-	h_shift_val = val
+	shift_vals[0] = val
 	make_graph()
-	os.remove('./temp_resources/temp.png')
 
 #vertical shift slider
 def update_v_shift(val):
-	global v_shift_val
-	v_shift_val = val
+	shift_vals[1] = val
 	make_graph()
-	os.remove('./temp_resources/temp.png')
 
 #preview button
 def preview_graph():
 	make_graph()
-	try:
-		os.remove('./temp_resources/temp.png')
-	except:
-		return
 
 	curve_smoothing_slider['state'] = 'normal'
 	horizontal_shift_slider['state'] = 'normal'
@@ -369,9 +369,9 @@ def make_graph(bounds = False):
 		T.append(t)
 
 	#manual h and v shift
-	strip_number = int(strip_selection.get().split(' ')[1])
-	T[strip_number-1] = [i+int(h_shift_val) for i in T[strip_number-1]]
-	S[strip_number-1] = [i+int(v_shift_val) for i in S[strip_number-1]]
+	# strip_number = int(strip_selection.get().split(' ')[1])
+	# T[strip_number-1] = [i+int(h_shift_val) for i in T[strip_number-1]]
+	# S[strip_number-1] = [i+int(v_shift_val) for i in S[strip_number-1]]
 
 	#bounds selection
 	if bounds == True:
@@ -477,13 +477,17 @@ def make_graph(bounds = False):
 	plt.savefig('./temp_resources/temp.png', bbox_inches='tight')
 	im = ImageTk.PhotoImage(Image.open('./temp_resources/temp.png').resize(plot_disp_size))
 	image_canvas.itemconfigure(imload, image=im)
+	try:
+		os.remove('./temp_resources/temp.png')
+	except:
+		return
 
 #saves graph
 def save_graph():
 	f = filedialog.askdirectory(initialdir='../', title='Choose Location to Save Data')
 	if f:
 		plt.savefig(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '.png', bbox_inches='tight')
-		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_multiprojDATA.xlsx')
+		workbook = xlsxwriter.Workbook(f+'/'+re.sub(r'\W','',os.path.split(root.filename)[1].split('.jpg')[0]) + '_DATA.xlsx')
 		worksheet1 = workbook.add_worksheet('Calculations')
 		worksheet2 = workbook.add_worksheet('Initial Values')
 		worksheet3 = workbook.add_worksheet('Adjusted Values')
@@ -539,7 +543,7 @@ def save_graph():
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, strip_selection, im, imload, peak_num_choice, strip_number
+	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, strip_selection, im, imload, peak_num_choice, strip_number, number_of_strips, shift_vals
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
@@ -560,9 +564,10 @@ def init():
 	#button for selecting image file to analyze
 	Button(left_frame, text="Select a file", command=select_file).pack(anchor= 'n',pady=(0,15))
 
-	#Number of strips to be analyzed
-	Label(left_frame, text="Enter number of strips to be analyzed: ").pack(anchor='n', pady=(0,0))
-	strip_number = Entry(left_frame)
+	#number of strips to be analyzed
+	Label(left_frame, text="Enter number of strips to be analyzed:", justify='center').pack(anchor='n', pady=(0,0))
+	entry_validation = root.register(validate)
+	strip_number = Entry(left_frame, justify='center', width=7, validate='all', validatecommand=(entry_validation, '%P'))
 	strip_number.pack(anchor= 'n',pady=(0,15))
 
 	#slider for scaling the cropped image
@@ -612,13 +617,14 @@ def init():
 
 	#RIGHT SIDE
 	#dropdown menu selection for manual shifting
-	options = []
-	for i in range(10):
-		options.extend(['Strip {}'.format(i+1)])
-	strip_selection = StringVar()
-	strip_selection.set(options[0])
-	w = OptionMenu(middle_frame, strip_selection, *options)
-	w.pack()
+	if number_of_strips > 0:
+		options = []
+		for i in range(10):
+			options.extend(['Strip {}'.format(i+1)])
+		strip_selection = StringVar()
+		strip_selection.set(options[0])
+		w = OptionMenu(middle_frame, strip_selection, *options)
+		w.pack()
 
 	#building the horizontal shift slider (used to shift one line left and right)
 	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
