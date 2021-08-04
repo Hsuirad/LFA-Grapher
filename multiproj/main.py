@@ -15,7 +15,7 @@ import xlsxwriter
 
 #make GUI
 root = tkinter.Tk()
-root.title("LFAGrapher")
+root.title("LFAMultiGrapher")
 smooth_val = 0
 number_of_strips = 1
 bounds = []
@@ -31,26 +31,6 @@ def validate(e):
 		return True
 	else:
 		return False
-
-# #character limits
-# def character_limit(p):
-# 	if len(p.get()) > 6 or is_number(p.get()) == False:
-# 		p.set(p.get()[:-1])
-		
-# #checks if value is a number
-# def is_number(n):
-# 	try:
-# 		float(n)
-# 		return True
-# 	except:
-# 		if n == "-":
-# 			return True
-# 		return False
-
-# 		# h_shift = StringVar()
-# 		# horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-# 		# horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
-# 		# h_shift.trace('w', lambda *args:character_limit(h_shift))
 
 #creates resource folder in the current directory
 if 'temp_resources' not in os.listdir('./'):
