@@ -36,8 +36,8 @@ def validate(e):
 if 'temp_resources' not in os.listdir('./'):
 	os.mkdir('./temp_resources')
 
-if 'gray' not in os.listdir('./temp_resources'):
-	os.mkdir('./temp_resources/gray')
+if 'cropped' not in os.listdir('./temp_resources'):
+	os.mkdir('./temp_resources/cropped')
 
 #for exiting the program
 def on_closing():
@@ -102,13 +102,65 @@ def select_file():
 		error_window("Root filename not \ncompatible with image path")
 		return
 
+	global im
+	imtemp = Image.open(img_path).resize(plot_disp_size)
+	im = ImageTk.PhotoImage(imtemp)
+	image_canvas.itemconfigure(imload, image=im)
+
+#threshold slider
+def update_thresh(val):
+	global thresh_val
+	thresh_val = val
+	thresh_and_crop()
+
+#image processing
+def thresh_and_crop():
+
+	try:
+		img_path = root.filename
+	except:
+		error_window("Root filename not \ncompatible with image path")
+		return
+
+	#thresholding
 	img = cv2.imread(img_path)
 	img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-	cv2.imwrite('./temp_resources/gray/' + os.path.split(img_path)[1], img_gray)
+	_, img_thresh = cv2.threshold(img_gray, 255*(float(thresh_val)/100), 255, cv2.THRESH_TOZERO)
+
+	#cropping
+	cnt, _ = cv2.findContours(img_thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE) 
+	cnt_sort = sorted(cnt, key=cv2.contourArea)
+
+	cv2.drawContours(img_thresh, cnt_sort[:-2], -1, 0, -1)
+	cnt_sort = cnt_sort[-2:]
+
+	xmin = cnt_sort[-1][0][0][0]
+	xmax = 0	
+	ymin = cnt_sort[-1][0][0][1]
+	ymax = 0
+
+	#finding lowest x val and highest x val
+	for i in range(len(cnt_sort)):
+		for j in range(len(cnt_sort[i])):
+			for z in range(len(cnt_sort[i][j])):
+				f = cnt_sort[i][j]
+				if f[z][0] < xmin:
+					xmin = f[z][0]
+				if f[z][0] > xmax:
+					xmax = f[z][0]
+				if f[z][1] < ymin:
+					ymin = f[z][1]
+				if f[z][1] > ymax:
+					ymax = f[z][1]
+	
+	img_crop = img_thresh[ymin:ymax, xmin:xmax]
+
+	#saves cropped image in cropped folder
+	cv2.imwrite('./temp_resources/cropped/' + os.path.split(img_path)[1], img_crop)
 
 	global im
-	imtemp = Image.open('./temp_resources/gray/' + os.path.split(img_path)[1]).resize(plot_disp_size)
+	imtemp = Image.open('./temp_resources/cropped/' + os.path.split(img_path)[1]).resize(plot_disp_size)
 	im = ImageTk.PhotoImage(imtemp)
 	image_canvas.itemconfigure(imload, image=im)
 
@@ -118,7 +170,7 @@ def find_roi():
 
 	try:
 		global img_path
-		img_path = './temp_resources/gray/' + os.path.split(root.filename)[1]
+		img_path = './temp_resources/cropped/' + os.path.split(root.filename)[1]
 	except:
 		error_window("Image path not defined")
 		return
@@ -337,7 +389,7 @@ def make_graph(bounds = False):
 	ax.tick_params(which='minor', width=1, length=5, labelsize=14)
 	ax.tick_params(which='major', width=1.5, length=15, labelsize=32)
 
-	plt.title(str(img_path).split('gray/')[1], loc = 'right')
+	plt.title(str(img_path).split('cropped/')[1], loc = 'right')
 	plt.ylabel('Rel. Int. (% max)', **hfont)
 	plt.xlabel('Pixel Distance', **hfont)
 
@@ -477,13 +529,18 @@ def init():
 	Button(left_frame, text="Select a file", command=select_file).pack(anchor='n', pady=(0,15))
 
 	#number of strips to be analyzed
-	Label(left_frame, text="Enter number of strips to be analyzed:", justify='center').pack(anchor='n', pady=(0,5))
+	Label(left_frame, text="Enter number of strips to be analyzed:", justify='center').pack(anchor='n', pady=(0,0))
 	entry_validation = root.register(validate)
 	strip_number = Entry(left_frame, justify='center', width=7, validate='all', validatecommand=(entry_validation, '%P'))
 	strip_number.pack(anchor='n', pady=(0,15))
 
+	#slider for scaling the cropped image
+	Label(left_frame, text="Threshold and Crop", justify="center").pack()
+	threshold_slider = Scale(left_frame, orient="horizontal", length=200, from_=1.0, to=30.0, command=update_thresh)
+	threshold_slider.pack(padx=20, pady=(0,10))
+
 	#button for selecting the region of interest (ROI), this ROI is then analyzed for the graph
-	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(5,25))
+	Button(left_frame, text="Select a ROI", command=find_roi).pack(pady=(0,15))
 
 	#slider for determining how much the curve is smoothed out (typically has very many oscillations and spikes)
 	Label(left_frame, text="Curve Smoothing", justify="center", padx=20).pack()
