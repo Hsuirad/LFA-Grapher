@@ -17,12 +17,11 @@ import xlsxwriter
 root = tkinter.Tk()
 root.title("LFAGrapher")
 smooth_val = 0
-number_of_strips = 0
-shift_vals = []
+number_of_strips = 1
 bounds = []
 
 #ratio is 3:2
-plot_disp_size = (int(430*1.5), 430)
+plot_disp_size = (645, 430)
 
 #validates strip number entry
 def validate(e):
@@ -33,25 +32,25 @@ def validate(e):
 	else:
 		return False
 
-#character limits
-def character_limit(p):
-	if len(p.get()) > 6 or is_number(p.get()) == False:
-		p.set(p.get()[:-1])
+# #character limits
+# def character_limit(p):
+# 	if len(p.get()) > 6 or is_number(p.get()) == False:
+# 		p.set(p.get()[:-1])
 		
-#checks if value is a number
-def is_number(n):
-	try:
-		float(n)
-		return True
-	except:
-		if n == "-":
-			return True
-		return False
+# #checks if value is a number
+# def is_number(n):
+# 	try:
+# 		float(n)
+# 		return True
+# 	except:
+# 		if n == "-":
+# 			return True
+# 		return False
 
-		# h_shift = StringVar()
-		# horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
-		# horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
-		# h_shift.trace('w', lambda *args:character_limit(h_shift))
+# 		# h_shift = StringVar()
+# 		# horizontal_shift_box = Entry(sub_middle_frame, textvariable=h_shift, width=8)
+# 		# horizontal_shift_box.grid(column=0, row=2, padx=(0,20), pady=(0,5))
+# 		# h_shift.trace('w', lambda *args:character_limit(h_shift))
 
 #creates resource folder in the current directory
 if 'temp_resources' not in os.listdir('./'):
@@ -187,7 +186,7 @@ def thresh_and_crop():
 
 #finding regions of interest
 def find_roi():
-	global number_of_strips 
+	global number_of_strips, shift_vals
 
 	try:
 		global img_path
@@ -205,6 +204,12 @@ def find_roi():
 
 	try:
 		number_of_strips = int(strip_number.get())
+		shift_vals = [[0]*number_of_strips for sub in range(2)]
+
+		for widgets in sub_right_frame.winfo_children():
+			widgets.destroy()
+
+		init_sub_right()
 
 		roi_list = []
 
@@ -248,21 +253,18 @@ def choose_peak_bounds():
 
 #horizontal shift slider
 def update_h_shift(val):
-	shift_vals[0] = val
+	shift_vals[0][int(strip_selection.get().split(' ')[1])-1] = val
 	make_graph()
 
 #vertical shift slider
 def update_v_shift(val):
-	shift_vals[1] = val
+	shift_vals[1][int(strip_selection.get().split(' ')[1])-1] = val
 	make_graph()
 
 #preview button
 def preview_graph():
 	make_graph()
-
 	curve_smoothing_slider['state'] = 'normal'
-	horizontal_shift_slider['state'] = 'normal'
-	vertical_shift_slider['state'] = 'normal'
 
 #displays graph
 def make_graph(bounds = False):
@@ -280,15 +282,6 @@ def make_graph(bounds = False):
 	except:
 		error_window("No ROI selected")
 		return
-
-	# #dropdown menu selection for manual shifting
-	# options = []
-	# for i in range(number_of_strips):
-	# 	options.extend(['Strip {}'.format(i+1)])
-	# strip_selection = StringVar()
-	# strip_selection.set(options[0])
-	# w = OptionMenu(Frame(root), strip_selection, *options)
-	# w.pack()
 	
 	#special treatment for this disaster
 	export_button['state'] = 'normal'
@@ -369,9 +362,9 @@ def make_graph(bounds = False):
 		T.append(t)
 
 	#manual h and v shift
-	# strip_number = int(strip_selection.get().split(' ')[1])
-	# T[strip_number-1] = [i+int(h_shift_val) for i in T[strip_number-1]]
-	# S[strip_number-1] = [i+int(v_shift_val) for i in S[strip_number-1]]
+	for s in range(number_of_strips):
+		T[s] = [i+int(shift_vals[0][s]) for i in T[s]]
+		S[s] = [i+int(shift_vals[1][s]) for i in S[s]]
 
 	#bounds selection
 	if bounds == True:
@@ -543,21 +536,17 @@ def save_graph():
 #initializes tkinter GUI
 def init():
 	#setting variables to global scope that need to be accessed outside of init()
-	global curve_smoothing_slider, horizontal_shift_slider, vertical_shift_slider, image_canvas, bounds_button, preview_button, export_button, baseline_choice, strip_selection, im, imload, peak_num_choice, strip_number, number_of_strips, shift_vals
+	global sub_right_frame, curve_smoothing_slider, bounds_button, preview_button, export_button, strip_number, baseline_choice, peak_num_choice, image_canvas, im, imload
 
 	left_frame = Frame(root)
 	left_frame.pack(side="left")
 
-	middle_frame = Frame(root)
-	middle_frame.pack(side="right")
-
 	right_frame = Frame(root)
 	right_frame.pack(side="right")
 
-	sub_middle_frame = Frame(middle_frame)
-	sub_middle_frame.pack(side="bottom", pady=(0,10))
+	sub_right_frame = Frame(right_frame)
+	sub_right_frame.pack(side="bottom", pady=(0,10))
 
-	#LEFT SIDE
 	#help button
 	Button(left_frame, text="Help", command=help_window).pack(anchor='nw', padx=(10,0),pady=(10,10))
 
@@ -615,40 +604,44 @@ def init():
 	export_button.pack(side="left", padx=(10,0), pady=(30,10))
 	export_button["state"] = "disable"
 
-	#RIGHT SIDE
-	#dropdown menu selection for manual shifting
-	if number_of_strips > 0:
-		options = []
-		for i in range(10):
-			options.extend(['Strip {}'.format(i+1)])
-		strip_selection = StringVar()
-		strip_selection.set(options[0])
-		w = OptionMenu(middle_frame, strip_selection, *options)
-		w.pack()
-
-	#building the horizontal shift slider (used to shift one line left and right)
-	Label(sub_middle_frame, text="Horizontal Shift").grid(column=0, row=1, padx=(0,20))
-	horizontal_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_h_shift)
-	horizontal_shift_slider.grid(column=0, row=0, padx=(0,20))
-	horizontal_shift_slider['state'] = 'disable'
-
-	#building the vertical shift slider (shifts one line up and down)
-	Label(sub_middle_frame, text="Vertical Shift").grid(column=1, row=1)
-	vertical_shift_slider = Scale(sub_middle_frame, orient="horizontal", length=300, from_=-10.0, to=10.0, command=update_v_shift)
-	vertical_shift_slider.grid(column=1, row=0)
-	vertical_shift_slider['state'] = 'disable'
-
 	#right side graph
 	width, height = plot_disp_size
-	image_canvas = Canvas(middle_frame, width=width, height=height)
+	image_canvas = Canvas(right_frame, width=width, height=height)
 	image_canvas.pack(padx=(20,0), pady=(0,0))
 
 	#blanks canvas with a white frame, image_canvas is modified to add the graph onto screen each time
 	im = ImageTk.PhotoImage(Image.new("RGB", plot_disp_size, (255, 255, 255)))  #PIL solution
 	imload = image_canvas.create_image(0, 0, image=im, anchor='nw')
 
+def init_sub_right():
+
+	global horizontal_shift_slider, vertical_shift_slider, strip_selection, number_of_strips, shift_vals
+
+	#dropdown menu selection for manual shifting
+	options = []
+	for i in range(number_of_strips):
+		options.extend(['Strip {}'.format(i+1)])
+	strip_selection = StringVar()
+	strip_selection.set(options[0])
+	w = OptionMenu(sub_right_frame, strip_selection, *options)
+	w.grid(column=0, row=0, pady=(20,0))
+
+	#building the horizontal shift slider (used to shift one line left and right)
+	Label(sub_right_frame, text="Horizontal Shift").grid(column=1, row=1, padx=(0,20))
+	horizontal_shift_slider = Scale(sub_right_frame, orient="horizontal", length=250, from_=-20.0, to=20.0, command=update_h_shift)
+	horizontal_shift_slider.grid(column=1, row=0, padx=(20,0))
+	horizontal_shift_slider.set(shift_vals[0][int(strip_selection.get().split(' ')[1])-1])
+
+	#building the vertical shift slider (shifts one line up and down)
+	Label(sub_right_frame, text="Vertical Shift").grid(column=2, row=1)
+	vertical_shift_slider = Scale(sub_right_frame, orient="horizontal", length=250, from_=-20.0, to=20.0, command=update_v_shift)
+	vertical_shift_slider.grid(column=2, row=0)
+	vertical_shift_slider.set(shift_vals[1][int(strip_selection.get().split(' ')[1])-1])
+
+
 if __name__ == '__main__':
 	init() #builds all the buttons and frames
-	
+	#init_sub_right() #builds the bottom right side inputs
+
 	root.protocol("WM_DELETE_WINDOW", on_closing) #when the "x" is hit to close the window, tkinter needs to handle it in a special way
 	root.mainloop() #starts the instance of tkinter (the GUI framework)
