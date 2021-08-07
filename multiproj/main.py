@@ -58,7 +58,7 @@ class CustomText(Text):
         end = self.index(end)
         self.mark_set("matchStart",start)
         self.mark_set("matchEnd",end)
-        self.mark_set("searchLimit", end)
+        self.mark_set("searchLimit",end)
 
         count = tkinter.IntVar()
         while True:
@@ -76,8 +76,8 @@ def help_window():
 	f = open("DIRECTIONS.txt", 'r')
 	text = f.readlines()
 	f.close()
-	t = CustomText(window, wrap="word", width=100, height=10, borderwidth=2)
-	t.pack(sid="top", fill="both", expand=True)
+	t = CustomText(window, wrap="word", font=("calibri light", 12), width=100, height=10, borderwidth=2)
+	t.pack(side="top", fill="both", expand=True)
 	t.insert("1.0","".join(text))
 	t.config(state='disable')
 	t.tag_configure("blue", foreground="blue")
@@ -503,7 +503,7 @@ def init():
 	peak_num_choice = tkinter.IntVar()
 	peak_num_choice.set(102)
 	modes = [("One Peak", 101), ("Two Peaks", 102)]
-	Label(left_frame, text="How many peaks to compare:", justify="left", padx=20).pack(pady=(20,0))
+	Label(left_frame, text="How many peaks to analyze:", justify="left", padx=20).pack(pady=(20,0))
 	for mode, val in modes:
 		Radiobutton(left_frame, text=mode, indicatoron=1, justify="left", padx=20, variable=peak_num_choice, value=val).pack(anchor='w')
 

@@ -1,0 +1,44 @@
+1. Select a file
+	- A pop-up window will open
+	- Supports .jpg, .jpeg, .png, .tif, and .tiff
+	- The image will appear in grayscale on the right
+
+2. Enter number of strips to be analyzed
+	- Supports up to 99 strips
+
+3. Select a region of interest (ROI)
+	- A pop-up window will open
+	- Drag the rectange over the region of each strip you want to analyze
+	- Press [Enter]/[Space] to confirm selection
+	- Press [C] to cancel selection
+
+3a. At this point, you can export the data by pressing [Export]. Or if you'd like to 
+      fine-tune or gather data on the peaks, follow the optional steps below.
+
+4. Curve smoothing
+	- Drag the slider to apply curve smoothing on the graph
+
+5. Select how to align the baselines
+	- Midpoint: recommended, aligns the midpoints of each curve
+	- Lowest Value: for erratic curves, aligns the minimums of each curve
+	- Press [Preview] to view the new graph
+
+6. Manual horizontal and vertical shifting
+	- In the dropdown, select which graph you want to shift
+	- Move the sliders to shift the selected graph
+
+7. Peak bounds selection
+	- Select either one or two peaks to analyze
+	- Press [Choose Bounds]
+	- A pop-up window will open
+	- Click on the left, then right side of the control peak
+	- If you selected two peaks, repeat for the test peak
+	- The graph will shade in your bounds selection
+
+8. Export
+	- A pop-up window will open
+	- Select which folder you would like to save your data to
+	- The graph will be saved as (Image Name).png
+	- The graph data and calculations will be saved as (Image Name)_DATA.xlsx
+
+8a. You can repeat from the beginning for a new image, or exit the program by clicking on the [X].
